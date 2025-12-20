@@ -630,11 +630,12 @@ export default function FlywheelVisualization() {
       <div className="grid gap-8 lg:grid-cols-[1fr,380px] xl:grid-cols-[1fr,420px]">
         {/* Flywheel visualization */}
         <div className="relative flex flex-col items-center justify-center">
-          {/* Responsive wrapper */}
-          <div
-            className="relative origin-center scale-[0.65] sm:scale-[0.8] md:scale-100"
-            style={{ width: CONTAINER_SIZE, height: CONTAINER_SIZE }}
-          >
+          {/* Responsive wrapper - clip overflow on mobile */}
+          <div className="w-full max-w-[312px] sm:max-w-[384px] md:max-w-[480px] aspect-square overflow-hidden">
+            <div
+              className="relative origin-top-left scale-[0.65] sm:scale-[0.8] md:scale-100"
+              style={{ width: CONTAINER_SIZE, height: CONTAINER_SIZE }}
+            >
             {/* SVG connections */}
             <svg className="absolute inset-0" width={CONTAINER_SIZE} height={CONTAINER_SIZE} aria-hidden="true">
               <style>
@@ -706,6 +707,7 @@ export default function FlywheelVisualization() {
                 onHover={(hovering) => setHoveredToolId(hovering ? tool.id : null)}
               />
             ))}
+            </div>
           </div>
 
           {/* Stats badge */}

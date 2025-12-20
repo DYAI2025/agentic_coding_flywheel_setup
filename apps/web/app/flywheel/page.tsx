@@ -131,7 +131,7 @@ function HeroSection() {
             </div>
             <div>
               <p className="text-xl font-bold text-foreground sm:text-2xl">6+</p>
-              <p className="text-xs text-muted-foreground sm:text-sm">Parallel agents</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">Parallel agents</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -140,7 +140,7 @@ function HeroSection() {
             </div>
             <div>
               <p className="text-xl font-bold text-foreground sm:text-2xl">7+</p>
-              <p className="text-xs text-muted-foreground sm:text-sm">Projects simultaneously</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">Projects simultaneously</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -149,7 +149,7 @@ function HeroSection() {
             </div>
             <div>
               <p className="text-xl font-bold text-foreground sm:text-2xl">2K+</p>
-              <p className="text-xs text-muted-foreground sm:text-sm">GitHub stars</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">GitHub stars</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ function HeroSection() {
             </div>
             <div>
               <p className="text-xl font-bold text-foreground sm:text-2xl">3+ hrs</p>
-              <p className="text-xs text-muted-foreground sm:text-sm">Autonomous work</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">Autonomous work</p>
             </div>
           </div>
         </div>
@@ -211,10 +211,10 @@ function WorkflowCard({ scenario, index }: { scenario: WorkflowScenario; index: 
           })}
         </div>
 
-        {/* Expand toggle */}
+        {/* Expand toggle - 44px min height for touch targets */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex w-full items-center justify-between rounded-lg bg-muted/30 px-4 py-2.5 text-left transition-colors hover:bg-muted/50"
+          className="flex w-full items-center justify-between rounded-lg bg-muted/30 px-4 py-3 min-h-[44px] text-left transition-colors hover:bg-muted/50"
         >
           <span className="text-sm font-medium text-foreground">
             {isExpanded ? "Hide steps" : "Show workflow steps"}
@@ -743,7 +743,7 @@ export default function FlywheelPage() {
       {/* Navigation */}
       <nav className="relative z-20 mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:py-6">
         <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+          <Button asChild variant="ghost" size="default" className="h-11 text-muted-foreground hover:text-foreground">
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
@@ -757,7 +757,7 @@ export default function FlywheelPage() {
           <span className="font-mono text-base font-bold tracking-tight lg:text-lg">ACFS</span>
         </div>
         <div className="flex items-center gap-4">
-          <Button asChild size="sm" variant="outline" className="border-primary/30 hover:bg-primary/10">
+          <Button asChild size="default" variant="outline" className="h-11 border-primary/30 hover:bg-primary/10">
             <Link href="/wizard/os-selection">
               Get Started
               <ChevronRight className="ml-1 h-4 w-4" />
