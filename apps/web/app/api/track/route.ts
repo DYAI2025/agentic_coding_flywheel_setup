@@ -13,6 +13,20 @@ const MAX_EVENT_NAME_LENGTH = 40;
 // Simple in-memory rate limiter (resets on server restart)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
+// Cleanup interval tracking - cleanup runs every ~100 requests to bound memory
+let requestsSinceCleanup = 0;
+const CLEANUP_INTERVAL = 100;
+const MAX_MAP_SIZE = 10000; // Hard limit to prevent runaway growth
+
+function cleanupExpiredEntries(): void {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitMap.entries()) {
+    if (now > record.resetTime) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}
+
 function getClientIP(request: NextRequest): string {
   return (
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -23,6 +37,14 @@ function getClientIP(request: NextRequest): string {
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
+
+  // Periodic cleanup to prevent unbounded memory growth
+  requestsSinceCleanup++;
+  if (requestsSinceCleanup >= CLEANUP_INTERVAL || rateLimitMap.size > MAX_MAP_SIZE) {
+    cleanupExpiredEntries();
+    requestsSinceCleanup = 0;
+  }
+
   const record = rateLimitMap.get(ip);
 
   if (!record || now > record.resetTime) {

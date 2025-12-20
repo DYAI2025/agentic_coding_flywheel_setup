@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { Check, AlertCircle, Server, ChevronDown, HardDrive } from "lucide-react";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { markStepComplete } from "@/lib/wizardSteps";
+import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { useVPSIP, isValidIP } from "@/lib/userPreferences";
 import {
   SimplerGuide,
@@ -107,11 +108,23 @@ export default function CreateVPSPage() {
   // Track checklist state locally for simpler form handling
   const [checkedItems, setCheckedItems] = useState<Set<ChecklistItemId>>(new Set());
 
+  // Analytics tracking for this wizard step
+  const { markComplete } = useWizardAnalytics({
+    step: "create_vps",
+    stepNumber: 5,
+    stepTitle: "Create VPS Instance",
+  });
+
+  // Store markComplete in a ref for use in form's onSubmit
+  const markCompleteRef = useRef(markComplete);
+  markCompleteRef.current = markComplete;
+
   const form = useForm({
     defaultValues: {
       ipAddress: storedIP ?? "",
     },
     onSubmit: async ({ value }) => {
+      markCompleteRef.current({ ip_entered: true });
       setStoredIP(value.ipAddress);
       markStepComplete(5);
       setIsNavigating(true);
