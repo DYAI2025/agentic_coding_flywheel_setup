@@ -24,9 +24,8 @@ set -euo pipefail
 ACFS_VERSION="0.1.0"
 ACFS_REPO="https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup"
 ACFS_RAW="https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main"
-ACFS_HOME="$HOME/.acfs"
+# Note: ACFS_HOME is set after TARGET_HOME is determined
 ACFS_LOG_DIR="/var/log/acfs"
-ACFS_STATE_FILE="$ACFS_HOME/state.json"
 
 # Default options
 YES_MODE=false
@@ -36,6 +35,11 @@ MODE="vibe"
 SKIP_POSTGRES=false
 SKIP_VAULT=false
 SKIP_CLOUD=false
+
+# Target user configuration
+# When running as root, we install for ubuntu user, not root
+TARGET_USER="ubuntu"
+TARGET_HOME="/home/$TARGET_USER"
 
 # Colors
 RED='\033[0;31m'
@@ -215,6 +219,25 @@ ensure_root() {
     fi
 }
 
+# Set up target-specific paths
+# Must be called after ensure_root
+init_target_paths() {
+    # If running as ubuntu, use ubuntu's home
+    # If running as root, install for ubuntu user
+    if [[ "$(whoami)" == "$TARGET_USER" ]]; then
+        TARGET_HOME="$HOME"
+    else
+        TARGET_HOME="/home/$TARGET_USER"
+    fi
+
+    # ACFS directories for target user
+    ACFS_HOME="$TARGET_HOME/.acfs"
+    ACFS_STATE_FILE="$ACFS_HOME/state.json"
+
+    log_detail "Target user: $TARGET_USER"
+    log_detail "Target home: $TARGET_HOME"
+}
+
 ensure_ubuntu() {
     if [[ ! -f /etc/os-release ]]; then
         log_fatal "Cannot detect OS. This script requires Ubuntu 24.04+ or 25.x"
@@ -259,32 +282,36 @@ ensure_base_deps() {
 normalize_user() {
     log_step "1/8" "Normalizing user account..."
 
-    local target_user="ubuntu"
     local current_user
     current_user=$(whoami)
 
-    # Create ubuntu user if it doesn't exist
-    if ! id "$target_user" &>/dev/null; then
-        log_detail "Creating user: $target_user"
-        $SUDO useradd -m -s /bin/bash "$target_user" || true
-        $SUDO usermod -aG sudo "$target_user"
+    # Create target user if it doesn't exist
+    if ! id "$TARGET_USER" &>/dev/null; then
+        log_detail "Creating user: $TARGET_USER"
+        $SUDO useradd -m -s /bin/bash "$TARGET_USER" || true
+        $SUDO usermod -aG sudo "$TARGET_USER"
     fi
 
     # Set up passwordless sudo in vibe mode
     if [[ "$MODE" == "vibe" ]]; then
-        log_detail "Enabling passwordless sudo for $target_user"
-        echo "$target_user ALL=(ALL) NOPASSWD:ALL" | $SUDO tee /etc/sudoers.d/90-ubuntu-acfs > /dev/null
+        log_detail "Enabling passwordless sudo for $TARGET_USER"
+        echo "$TARGET_USER ALL=(ALL) NOPASSWD:ALL" | $SUDO tee /etc/sudoers.d/90-ubuntu-acfs > /dev/null
         $SUDO chmod 440 /etc/sudoers.d/90-ubuntu-acfs
     fi
 
     # Copy SSH keys from root if running as root
     if [[ $EUID -eq 0 ]] && [[ -f /root/.ssh/authorized_keys ]]; then
-        log_detail "Copying SSH keys to $target_user"
-        $SUDO mkdir -p /home/$target_user/.ssh
-        $SUDO cp /root/.ssh/authorized_keys /home/$target_user/.ssh/
-        $SUDO chown -R $target_user:$target_user /home/$target_user/.ssh
-        $SUDO chmod 700 /home/$target_user/.ssh
-        $SUDO chmod 600 /home/$target_user/.ssh/authorized_keys
+        log_detail "Copying SSH keys to $TARGET_USER"
+        $SUDO mkdir -p "$TARGET_HOME/.ssh"
+        $SUDO cp /root/.ssh/authorized_keys "$TARGET_HOME/.ssh/"
+        $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.ssh"
+        $SUDO chmod 700 "$TARGET_HOME/.ssh"
+        $SUDO chmod 600 "$TARGET_HOME/.ssh/authorized_keys"
+    fi
+
+    # Add target user to docker group if docker is installed
+    if getent group docker &>/dev/null; then
+        $SUDO usermod -aG docker "$TARGET_USER" 2>/dev/null || true
     fi
 
     log_success "User normalization complete"
@@ -296,20 +323,30 @@ normalize_user() {
 setup_filesystem() {
     log_step "2/8" "Setting up filesystem..."
 
-    local dirs=("/data/projects" "/data/cache" "$HOME/Development" "$HOME/Projects" "$HOME/dotfiles")
-
-    for dir in "${dirs[@]}"; do
+    # System directories
+    local sys_dirs=("/data/projects" "/data/cache")
+    for dir in "${sys_dirs[@]}"; do
         if [[ ! -d "$dir" ]]; then
             log_detail "Creating: $dir"
             $SUDO mkdir -p "$dir"
         fi
     done
 
-    # Ensure /data is owned by ubuntu
-    $SUDO chown -R ubuntu:ubuntu /data 2>/dev/null || true
+    # Ensure /data is owned by target user
+    $SUDO chown -R "$TARGET_USER:$TARGET_USER" /data 2>/dev/null || true
+
+    # User directories (in TARGET_HOME, not $HOME)
+    local user_dirs=("$TARGET_HOME/Development" "$TARGET_HOME/Projects" "$TARGET_HOME/dotfiles")
+    for dir in "${user_dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            log_detail "Creating: $dir"
+            $SUDO mkdir -p "$dir"
+        fi
+    done
 
     # Create ACFS directories
-    mkdir -p "$ACFS_HOME"/{zsh,tmux,bin,docs,logs}
+    $SUDO mkdir -p "$ACFS_HOME"/{zsh,tmux,bin,docs,logs}
+    $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$ACFS_HOME"
     $SUDO mkdir -p "$ACFS_LOG_DIR"
 
     log_success "Filesystem setup complete"
@@ -327,49 +364,55 @@ setup_shell() {
         $SUDO apt-get install -y zsh
     fi
 
-    # Install Oh My Zsh
-    if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-        log_detail "Installing Oh My Zsh"
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    # Install Oh My Zsh for target user
+    local omz_dir="$TARGET_HOME/.oh-my-zsh"
+    if [[ ! -d "$omz_dir" ]]; then
+        log_detail "Installing Oh My Zsh for $TARGET_USER"
+        # Run as target user to install in their home
+        $SUDO -u "$TARGET_USER" sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     fi
 
     # Install Powerlevel10k theme
-    local p10k_dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+    local p10k_dir="$omz_dir/custom/themes/powerlevel10k"
     if [[ ! -d "$p10k_dir" ]]; then
         log_detail "Installing Powerlevel10k theme"
-        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$p10k_dir"
+        $SUDO -u "$TARGET_USER" git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$p10k_dir"
     fi
 
     # Install zsh plugins
-    local custom_plugins="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
+    local custom_plugins="$omz_dir/custom/plugins"
 
     if [[ ! -d "$custom_plugins/zsh-autosuggestions" ]]; then
         log_detail "Installing zsh-autosuggestions"
-        git clone https://github.com/zsh-users/zsh-autosuggestions "$custom_plugins/zsh-autosuggestions"
+        $SUDO -u "$TARGET_USER" git clone https://github.com/zsh-users/zsh-autosuggestions "$custom_plugins/zsh-autosuggestions"
     fi
 
     if [[ ! -d "$custom_plugins/zsh-syntax-highlighting" ]]; then
         log_detail "Installing zsh-syntax-highlighting"
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$custom_plugins/zsh-syntax-highlighting"
+        $SUDO -u "$TARGET_USER" git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$custom_plugins/zsh-syntax-highlighting"
     fi
 
     # Copy ACFS zshrc
     log_detail "Installing ACFS zshrc"
     curl -fsSL "$ACFS_RAW/acfs/zsh/acfs.zshrc" -o "$ACFS_HOME/zsh/acfs.zshrc"
+    $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/zsh/acfs.zshrc"
 
-    # Create minimal .zshrc loader
-    cat > "$HOME/.zshrc" << 'EOF'
+    # Create minimal .zshrc loader for target user
+    cat > "$TARGET_HOME/.zshrc" << 'EOF'
 # ACFS loader
 source "$HOME/.acfs/zsh/acfs.zshrc"
 
 # User overrides live here forever
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
 EOF
+    $SUDO chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.zshrc"
 
-    # Set zsh as default shell
-    if [[ "$SHELL" != *"zsh"* ]]; then
-        log_detail "Setting zsh as default shell"
-        $SUDO chsh -s "$(which zsh)" "$(whoami)" || true
+    # Set zsh as default shell for target user
+    local current_shell
+    current_shell=$(getent passwd "$TARGET_USER" | cut -d: -f7)
+    if [[ "$current_shell" != *"zsh"* ]]; then
+        log_detail "Setting zsh as default shell for $TARGET_USER"
+        $SUDO chsh -s "$(which zsh)" "$TARGET_USER" || true
     fi
 
     log_success "Shell setup complete"
@@ -419,40 +462,40 @@ install_cli_tools() {
 install_languages() {
     log_step "5/8" "Installing language runtimes..."
 
-    # Bun
-    if ! command_exists bun; then
-        log_detail "Installing Bun"
-        curl -fsSL https://bun.sh/install | bash
+    # Bun (install as target user)
+    if [[ ! -d "$TARGET_HOME/.bun" ]]; then
+        log_detail "Installing Bun for $TARGET_USER"
+        $SUDO -u "$TARGET_USER" bash -c 'curl -fsSL https://bun.sh/install | bash'
     fi
 
-    # Rust
-    if [[ ! -d "$HOME/.cargo" ]]; then
-        log_detail "Installing Rust"
-        curl https://sh.rustup.rs -sSf | sh -s -- -y
+    # Rust (install as target user)
+    if [[ ! -d "$TARGET_HOME/.cargo" ]]; then
+        log_detail "Installing Rust for $TARGET_USER"
+        $SUDO -u "$TARGET_USER" bash -c 'curl https://sh.rustup.rs -sSf | sh -s -- -y'
     fi
 
-    # Go
+    # Go (system-wide)
     if ! command_exists go; then
         log_detail "Installing Go"
         $SUDO apt-get install -y golang-go
     fi
 
-    # uv (Python)
-    if ! command_exists uv; then
-        log_detail "Installing uv"
-        curl -LsSf https://astral.sh/uv/install.sh | sh
+    # uv (install as target user)
+    if [[ ! -f "$TARGET_HOME/.local/bin/uv" ]]; then
+        log_detail "Installing uv for $TARGET_USER"
+        $SUDO -u "$TARGET_USER" bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
     fi
 
-    # Atuin (shell history)
-    if [[ ! -d "$HOME/.atuin" ]]; then
-        log_detail "Installing Atuin"
-        curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
+    # Atuin (install as target user)
+    if [[ ! -d "$TARGET_HOME/.atuin" ]]; then
+        log_detail "Installing Atuin for $TARGET_USER"
+        $SUDO -u "$TARGET_USER" bash -c 'curl --proto "=https" --tlsv1.2 -LsSf https://setup.atuin.sh | sh'
     fi
 
-    # Zoxide (better cd)
-    if ! command_exists zoxide; then
-        log_detail "Installing Zoxide"
-        curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+    # Zoxide (install as target user)
+    if [[ ! -f "$TARGET_HOME/.local/bin/zoxide" ]]; then
+        log_detail "Installing Zoxide for $TARGET_USER"
+        $SUDO -u "$TARGET_USER" bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh'
     fi
 
     log_success "Language runtimes installed"
@@ -464,21 +507,24 @@ install_languages() {
 install_agents() {
     log_step "6/8" "Installing coding agents..."
 
-    # Source bun path
-    export BUN_INSTALL="$HOME/.bun"
-    export PATH="$BUN_INSTALL/bin:$PATH"
+    # Use target user's bun
+    local bun_bin="$TARGET_HOME/.bun/bin/bun"
 
-    # Codex CLI
-    log_detail "Installing Codex CLI"
-    bun install -g @openai/codex@latest 2>/dev/null || true
+    if [[ ! -x "$bun_bin" ]]; then
+        log_warn "Bun not found at $bun_bin, skipping agent CLI installation"
+        return 0
+    fi
 
-    # Gemini CLI
-    log_detail "Installing Gemini CLI"
-    bun install -g @google/gemini-cli@latest 2>/dev/null || true
+    # Codex CLI (install as target user)
+    log_detail "Installing Codex CLI for $TARGET_USER"
+    $SUDO -u "$TARGET_USER" "$bun_bin" install -g @openai/codex@latest 2>/dev/null || true
+
+    # Gemini CLI (install as target user)
+    log_detail "Installing Gemini CLI for $TARGET_USER"
+    $SUDO -u "$TARGET_USER" "$bun_bin" install -g @google/gemini-cli@latest 2>/dev/null || true
 
     # Claude Code (if installer is available)
-    log_detail "Installing Claude Code"
-    # Claude Code installation varies, attempting common method
+    log_detail "Checking Claude Code"
     if command_exists claude; then
         log_detail "Claude Code already installed"
     else
@@ -494,37 +540,44 @@ install_agents() {
 install_stack() {
     log_step "7/8" "Installing Dicklesworthstone stack..."
 
+    # Helper to run install scripts as target user
+    run_as_target() {
+        local url="$1"
+        local args="${2:-}"
+        $SUDO -u "$TARGET_USER" bash -c "curl -fsSL '$url' 2>/dev/null | bash -s -- $args" || return 1
+    }
+
     # NTM (Named Tmux Manager)
     log_detail "Installing NTM"
-    curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh 2>/dev/null | bash || log_warn "NTM installation may have failed"
+    run_as_target "https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh" || log_warn "NTM installation may have failed"
 
     # MCP Agent Mail
     log_detail "Installing MCP Agent Mail"
-    curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh?$(date +%s)" 2>/dev/null | bash -s -- --yes || log_warn "MCP Agent Mail installation may have failed"
+    run_as_target "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh?$(date +%s)" "--yes" || log_warn "MCP Agent Mail installation may have failed"
 
     # Ultimate Bug Scanner
     log_detail "Installing Ultimate Bug Scanner"
-    curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh?$(date +%s)" 2>/dev/null | bash -s -- --easy-mode || log_warn "UBS installation may have failed"
+    run_as_target "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh?$(date +%s)" "--easy-mode" || log_warn "UBS installation may have failed"
 
     # Beads Viewer
     log_detail "Installing Beads Viewer"
-    curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh?$(date +%s)" 2>/dev/null | bash || log_warn "Beads Viewer installation may have failed"
+    run_as_target "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh?$(date +%s)" || log_warn "Beads Viewer installation may have failed"
 
     # CASS (Coding Agent Session Search)
     log_detail "Installing CASS"
-    curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh 2>/dev/null | bash -s -- --easy-mode --verify || log_warn "CASS installation may have failed"
+    run_as_target "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh" "--easy-mode --verify" || log_warn "CASS installation may have failed"
 
     # CASS Memory System
     log_detail "Installing CASS Memory System"
-    curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh 2>/dev/null | bash -s -- --easy-mode --verify || log_warn "CM installation may have failed"
+    run_as_target "https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh" "--easy-mode --verify" || log_warn "CM installation may have failed"
 
     # CAAM (Coding Agent Account Manager)
     log_detail "Installing CAAM"
-    curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh?$(date +%s)" 2>/dev/null | bash || log_warn "CAAM installation may have failed"
+    run_as_target "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh?$(date +%s)" || log_warn "CAAM installation may have failed"
 
     # SLB (Simultaneous Launch Button)
     log_detail "Installing SLB"
-    curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh 2>/dev/null | bash || log_warn "SLB installation may have failed"
+    run_as_target "https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh" || log_warn "SLB installation may have failed"
 
     log_success "Dicklesworthstone stack installed"
 }
@@ -538,10 +591,11 @@ finalize() {
     # Copy tmux config
     log_detail "Installing tmux config"
     curl -fsSL "$ACFS_RAW/acfs/tmux/tmux.conf" -o "$ACFS_HOME/tmux/tmux.conf"
+    $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/tmux/tmux.conf"
 
-    # Link to user's tmux.conf if it doesn't exist
-    if [[ ! -f "$HOME/.tmux.conf" ]]; then
-        ln -sf "$ACFS_HOME/tmux/tmux.conf" "$HOME/.tmux.conf"
+    # Link to target user's tmux.conf if it doesn't exist
+    if [[ ! -f "$TARGET_HOME/.tmux.conf" ]]; then
+        $SUDO -u "$TARGET_USER" ln -sf "$ACFS_HOME/tmux/tmux.conf" "$TARGET_HOME/.tmux.conf"
     fi
 
     # Create state file
@@ -550,9 +604,11 @@ finalize() {
   "version": "$ACFS_VERSION",
   "installed_at": "$(date -Iseconds)",
   "mode": "$MODE",
+  "target_user": "$TARGET_USER",
   "completed_phases": [1, 2, 3, 4, 5, 6, 7, 8]
 }
 EOF
+    $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_STATE_FILE"
 
     log_success "Installation complete!"
 }
@@ -656,6 +712,7 @@ main() {
     fi
 
     ensure_root
+    init_target_paths
     ensure_ubuntu
     ensure_base_deps
 

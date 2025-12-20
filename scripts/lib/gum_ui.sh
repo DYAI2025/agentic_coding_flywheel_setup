@@ -148,10 +148,10 @@ gum_fatal() {
 }
 
 # Spinner for long operations
+# Usage: gum_spin "message" command arg1 arg2 ...
 gum_spin() {
     local message="$1"
     shift
-    local cmd="$@"
 
     if [[ "$HAS_GUM" == "true" ]]; then
         gum spin \
@@ -159,10 +159,10 @@ gum_spin() {
             --title.foreground "$ACFS_MUTED" \
             --spinner dot \
             --title "$message" \
-            -- bash -c "$cmd"
+            -- "$@"
     else
         echo -e "\033[0;90m⏳ $message...\033[0m"
-        eval "$cmd"
+        "$@"
     fi
 }
 

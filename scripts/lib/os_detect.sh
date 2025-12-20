@@ -2,7 +2,17 @@
 # ============================================================
 # ACFS Installer - OS Detection Library
 # Detects and validates the operating system
+#
+# Requires: logging.sh to be sourced first for log_* functions
 # ============================================================
+
+# Fallback logging if logging.sh not sourced
+if ! declare -f log_fatal &>/dev/null; then
+    log_fatal() { echo "FATAL: $1" >&2; exit 1; }
+    log_detail() { echo "  $1" >&2; }
+    log_warn() { echo "WARN: $1" >&2; }
+    log_success() { echo "OK: $1" >&2; }
+fi
 
 # Detect OS and version
 # Sets: OS_ID, OS_VERSION, OS_VERSION_MAJOR, OS_CODENAME

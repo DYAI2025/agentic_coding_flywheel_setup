@@ -2,7 +2,24 @@
 # ============================================================
 # ACFS Installer - User Normalization Library
 # Ensures consistent user setup across VPS providers
+#
+# Requires:
+#   - logging.sh to be sourced first for log_* functions
+#   - $SUDO to be set (empty string for root, "sudo" otherwise)
 # ============================================================
+
+# Fallback logging if logging.sh not sourced
+if ! declare -f log_fatal &>/dev/null; then
+    log_fatal() { echo "FATAL: $1" >&2; exit 1; }
+    log_detail() { echo "  $1" >&2; }
+    log_warn() { echo "WARN: $1" >&2; }
+    log_success() { echo "OK: $1" >&2; }
+    log_error() { echo "ERROR: $1" >&2; }
+    log_step() { echo "[$1] $2" >&2; }
+fi
+
+# Ensure SUDO is set
+: "${SUDO:=sudo}"
 
 # Target user for ACFS installations
 ACFS_TARGET_USER="${ACFS_TARGET_USER:-ubuntu}"

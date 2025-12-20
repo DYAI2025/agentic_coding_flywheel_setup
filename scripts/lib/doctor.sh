@@ -184,23 +184,23 @@ check_agents() {
     check_command "agent.codex" "Codex CLI" "codex" "bun install -g @openai/codex@latest"
     check_command "agent.gemini" "Gemini CLI" "gemini" "bun install -g @google/gemini-cli@latest"
 
-    # Check aliases
-    if alias cc &>/dev/null 2>&1 || grep -q "alias cc=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
+    # Check aliases are defined in the zshrc
+    if grep -q "^alias cc=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
         check "agent.alias.cc" "cc alias" "pass"
     else
-        check "agent.alias.cc" "cc alias" "warn"
+        check "agent.alias.cc" "cc alias" "warn" "not in zshrc"
     fi
 
-    if alias cod &>/dev/null 2>&1 || grep -q "alias cod=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
+    if grep -q "^alias cod=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
         check "agent.alias.cod" "cod alias" "pass"
     else
-        check "agent.alias.cod" "cod alias" "warn"
+        check "agent.alias.cod" "cod alias" "warn" "not in zshrc"
     fi
 
-    if alias gmi &>/dev/null 2>&1 || grep -q "alias gmi=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
+    if grep -q "^alias gmi=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
         check "agent.alias.gmi" "gmi alias" "pass"
     else
-        check "agent.alias.gmi" "gmi alias" "warn"
+        check "agent.alias.gmi" "gmi alias" "warn" "not in zshrc"
     fi
 
     echo ""
