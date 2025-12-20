@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# ============================================================
+# ACFS Installer - Ubuntu Integration Test (Docker)
+#
+# Runs the full installer inside a fresh Ubuntu container image, then runs
+# `acfs doctor` as the `ubuntu` user.
+#
+# Usage:
+#   ./tests/vm/test_install_ubuntu.sh              # defaults to 24.04
+#   ./tests/vm/test_install_ubuntu.sh --all        # run 24.04 + 25.04
+#   ./tests/vm/test_install_ubuntu.sh --ubuntu 25.04
+#
+# Requirements:
+#   - docker (or compatible runtime that supports `docker run`)
+# ============================================================
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+tests/vm/test_install_ubuntu.sh - ACFS installer integration test (Docker)
+
+Usage:
+  ./tests/vm/test_install_ubuntu.sh [options]
+
+Options:
+  --ubuntu <version>   Ubuntu tag (e.g. 24.04, 25.04). Repeatable.
+  --all                Run on 24.04 and 25.04.
+  --help               Show help.
+
+Examples:
+  ./tests/vm/test_install_ubuntu.sh
+  ./tests/vm/test_install_ubuntu.sh --all
+  ./tests/vm/test_install_ubuntu.sh --ubuntu 25.04
+EOF
+}
+
+if [[ "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "ERROR: docker not found. Install Docker Desktop or docker engine." >&2
+  exit 1
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+declare -a ubuntus=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --ubuntu)
+      ubuntus+=("${2:-}")
+      shift 2
+      ;;
+    --all)
+      ubuntus=("24.04" "25.04")
+      shift
+      ;;
+    --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [[ ${#ubuntus[@]} -eq 0 ]]; then
+  ubuntus=("24.04")
+fi
+
+run_one() {
+  local ubuntu_version="$1"
+  local image="ubuntu:${ubuntu_version}"
+
+  echo "" >&2
+  echo "============================================================" >&2
+  echo "[ACFS Test] Ubuntu ${ubuntu_version}" >&2
+  echo "============================================================" >&2
+
+  docker pull "$image" >/dev/null
+
+  docker run --rm -t \
+    -e DEBIAN_FRONTEND=noninteractive \
+    -v "${REPO_ROOT}:/repo:ro" \
+    "$image" bash -lc '
+      set -euo pipefail
+
+      apt-get update
+      apt-get install -y sudo curl git ca-certificates jq unzip tar xz-utils gnupg
+
+      cd /repo
+      bash install.sh --yes --mode vibe
+
+      su - ubuntu -c "zsh -ic '\''acfs doctor'\''"
+      su - ubuntu -c "zsh -ic '\''onboard --help >/dev/null'\''"
+      su - ubuntu -c "zsh -ic '\''ntm --help >/dev/null'\''"
+      su - ubuntu -c "zsh -ic '\''codex --version >/dev/null'\''"
+      su - ubuntu -c "zsh -ic '\''gemini --version >/dev/null'\''"
+      su - ubuntu -c "zsh -ic '\''claude --version >/dev/null'\''"
+    '
+}
+
+for ubuntu_version in "${ubuntus[@]}"; do
+  if [[ -z "$ubuntu_version" ]]; then
+    echo "ERROR: --ubuntu requires a version (e.g. 24.04)" >&2
+    exit 1
+  fi
+  run_one "$ubuntu_version"
+done
+
+echo "" >&2
+echo "✅ All requested Ubuntu installer tests passed." >&2
+

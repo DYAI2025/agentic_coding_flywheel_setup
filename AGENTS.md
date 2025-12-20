@@ -283,7 +283,7 @@ Key patterns:
 # Local lint
 shellcheck install.sh scripts/lib/*.sh
 
-# Full VM test (requires Vagrant or cloud VM)
+# Full installer integration test (Docker, same as CI)
 ./tests/vm/test_install_ubuntu.sh
 ```
 

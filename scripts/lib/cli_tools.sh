@@ -302,9 +302,17 @@ install_atuin() {
     fi
 
     log_detail "Installing atuin..."
-    _cli_run_as_user 'curl --proto "=https" --tlsv1.2 -LsSf https://setup.atuin.sh | sh' || log_warn "Could not install atuin"
+    if ! _cli_run_as_user 'curl --proto "=https" --tlsv1.2 -LsSf https://setup.atuin.sh | sh'; then
+        log_warn "Could not install atuin"
+    fi
 
-    log_success "atuin installed"
+    if [[ -d "$target_home/.atuin" ]] || _cli_command_exists atuin; then
+        log_success "atuin installed"
+        return 0
+    fi
+
+    log_warn "atuin not installed"
+    return 1
 }
 
 # ============================================================

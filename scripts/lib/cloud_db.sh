@@ -328,7 +328,9 @@ verify_cloud_db() {
     log_detail "Verifying cloud & database tools..."
 
     # Check PostgreSQL
-    if _cloud_command_exists psql; then
+    if [[ "${SKIP_POSTGRES:-false}" == "true" ]]; then
+        log_detail "  psql: skipped (SKIP_POSTGRES=true)"
+    elif _cloud_command_exists psql; then
         local pg_version
         pg_version=$(psql --version 2>/dev/null | grep -oP '\d+\.\d+' | head -1 || echo "installed")
         log_detail "  psql: $pg_version"
@@ -347,7 +349,9 @@ verify_cloud_db() {
     fi
 
     # Check Vault
-    if _cloud_command_exists vault; then
+    if [[ "${SKIP_VAULT:-false}" == "true" ]]; then
+        log_detail "  vault: skipped (SKIP_VAULT=true)"
+    elif _cloud_command_exists vault; then
         local vault_version
         vault_version=$(vault --version 2>/dev/null | head -1 || echo "installed")
         log_detail "  vault: $vault_version"
@@ -358,14 +362,18 @@ verify_cloud_db() {
 
     # Check cloud CLIs
     local bun_bin_dir="$target_home/.bun/bin"
-    for cli in "${CLOUD_CLIS[@]}"; do
-        if [[ -x "$bun_bin_dir/$cli" ]]; then
-            log_detail "  $cli: installed"
-        else
-            log_warn "  Missing: $cli"
-            all_pass=false
-        fi
-    done
+    if [[ "${SKIP_CLOUD:-false}" == "true" ]]; then
+        log_detail "  cloud CLIs: skipped (SKIP_CLOUD=true)"
+    else
+        for cli in "${CLOUD_CLIS[@]}"; do
+            if [[ -x "$bun_bin_dir/$cli" ]]; then
+                log_detail "  $cli: installed"
+            else
+                log_warn "  Missing: $cli"
+                all_pass=false
+            fi
+        done
+    fi
 
     if [[ "$all_pass" == "true" ]]; then
         log_success "All cloud & database tools verified"

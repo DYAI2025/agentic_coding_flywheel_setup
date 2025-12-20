@@ -842,7 +842,7 @@ agentic_coding_flywheel_setup/
 │
 └── tests/
     └── vm/
-        └── test_install_ubuntu.sh # VM test script
+        └── test_install_ubuntu.sh # Docker integration test script
 ```
 
 ---
@@ -866,7 +866,7 @@ bun run type-check    # TypeScript check
 # Local lint
 shellcheck install.sh scripts/lib/*.sh
 
-# Full VM test (requires Vagrant or cloud VM)
+# Full installer integration test (Docker, same as CI)
 ./tests/vm/test_install_ubuntu.sh
 ```
 
