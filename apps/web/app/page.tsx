@@ -22,7 +22,7 @@ import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 
 // Animated terminal lines
 const TERMINAL_LINES = [
-  { type: "command", text: "curl -fsSL https://acfs.dev/install | bash" },
+  { type: "command", text: "curl -fsSL https://agent-flywheel.com/install | bash" },
   { type: "output", text: "▸ Detecting Ubuntu 24.04... ✓" },
   { type: "output", text: "▸ Installing zsh + oh-my-zsh + powerlevel10k..." },
   { type: "output", text: "▸ Installing bun, uv, rust, go..." },
