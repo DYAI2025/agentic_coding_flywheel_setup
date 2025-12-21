@@ -11,7 +11,7 @@ import { useCallback } from "react";
 import { safeGetJSON, safeSetJSON } from "./utils";
 
 export interface WizardStep {
-  /** Step number (1-10) */
+  /** Step number (1..TOTAL_STEPS) */
   id: number;
   /** Short title for the step */
   title: string;
@@ -115,7 +115,7 @@ export const wizardStepsKeys = {
 export function getCompletedSteps(): number[] {
   const parsed = safeGetJSON<unknown[]>(COMPLETED_STEPS_KEY);
   if (Array.isArray(parsed)) {
-    // Filter to only valid step numbers (1-10)
+    // Filter to only valid step numbers (1..TOTAL_STEPS)
     return parsed.filter(
       (n): n is number => typeof n === "number" && n >= 1 && n <= TOTAL_STEPS
     );

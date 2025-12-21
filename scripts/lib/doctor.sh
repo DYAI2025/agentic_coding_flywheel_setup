@@ -1052,19 +1052,25 @@ check_postgres_role() {
 
     # Try to check if ubuntu role exists
     local role_check
-    role_check=$(timeout 5 psql -w -h localhost -U postgres -tAc \
-        "SELECT 1 FROM pg_roles WHERE rolname='ubuntu'" 2>/dev/null) || \
-    role_check=$(timeout 5 psql -w -h /var/run/postgresql -U postgres -tAc \
-        "SELECT 1 FROM pg_roles WHERE rolname='ubuntu'" 2>/dev/null) || \
-    role_check=""
+    local connect_success=false
 
-    if [[ "$role_check" == "1" ]]; then
-        check "deep.db.postgres_role" "PostgreSQL ubuntu role" "pass" "role exists"
-    elif [[ -z "$role_check" ]]; then
-        # Connection failed or role doesn't exist - info status
-        check "deep.db.postgres_role" "PostgreSQL ubuntu role" "warn" "could not verify" "sudo -u postgres createuser -s ubuntu"
+    # Try localhost first
+    if role_check=$(timeout 5 psql -w -h localhost -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='ubuntu'" 2>/dev/null); then
+        connect_success=true
+    # Try unix socket fallback
+    elif role_check=$(timeout 5 psql -w -h /var/run/postgresql -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='ubuntu'" 2>/dev/null); then
+        connect_success=true
+    fi
+
+    if [[ "$connect_success" == "true" ]]; then
+        if [[ "$role_check" == "1" ]]; then
+            check "deep.db.postgres_role" "PostgreSQL ubuntu role" "pass" "role exists"
+        else
+            check "deep.db.postgres_role" "PostgreSQL ubuntu role" "warn" "role missing" "sudo -u postgres createuser -s ubuntu"
+        fi
     else
-        check "deep.db.postgres_role" "PostgreSQL ubuntu role" "warn" "role missing" "sudo -u postgres createuser -s ubuntu"
+        # Connection failed
+        check "deep.db.postgres_role" "PostgreSQL ubuntu role" "warn" "could not verify (connection failed)" "sudo systemctl status postgresql"
     fi
 }
 
