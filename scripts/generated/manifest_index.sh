@@ -238,3 +238,5 @@ declare -gA ACFS_MODULE_DEFAULT=(
   ["acfs.onboard"]="1"
   ["acfs.doctor"]="1"
 )
+
+ACFS_MANIFEST_INDEX_LOADED=true

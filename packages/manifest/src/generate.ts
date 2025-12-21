@@ -542,6 +542,10 @@ function generateManifestIndex(manifest: Manifest, manifestSha256: string): stri
   lines.push(')');
   lines.push('');
 
+  // Mark that the index is fully loaded (used by acfs_resolve_selection)
+  lines.push('ACFS_MANIFEST_INDEX_LOADED=true');
+  lines.push('');
+
   return lines.join('\n');
 }
 
