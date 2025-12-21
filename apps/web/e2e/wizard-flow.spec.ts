@@ -8,12 +8,12 @@ import { test, expect } from "@playwright/test";
  *
  * Button text for each step:
  * - Step 1 (OS Selection): "Continue"
- * - Step 2 (Install Terminal): "Continue"
+ * - Step 2 (Install Terminal): "I installed it, continue"
  * - Step 3 (Generate SSH Key): "I copied my public key"
  * - Step 4 (Rent VPS): "I rented a VPS"
  * - Step 5 (Create VPS): "Continue to SSH"
  * - Step 6 (SSH Connect): "I'm connected, continue"
- * - Step 7 (Run Installer): "I finished installing"
+ * - Step 7 (Run Installer): "Installation finished"
  * - Step 8 (Reconnect Ubuntu): "I'm connected as ubuntu"
  * - Step 9 (Status Check): "Everything looks good!"
  */

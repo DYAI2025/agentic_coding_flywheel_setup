@@ -140,10 +140,9 @@ export function Jargon({ term, children, className }: JargonProps) {
   }, [isMobile]);
 
   const handleClick = useCallback(() => {
-    if (isMobile) {
-      setIsOpen(true);
-    }
-  }, [isMobile]);
+    // Always open on click - supports both mobile tap and desktop keyboard activation
+    setIsOpen(true);
+  }, []);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -260,6 +259,9 @@ export function Jargon({ term, children, className }: JargonProps) {
               {/* Sheet */}
               <motion.div
                 ref={tooltipRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={`jargon-sheet-title-${term}`}
                 initial={prefersReducedMotion ? { opacity: 0 } : { y: "100%" }}
                 animate={prefersReducedMotion ? { opacity: 1 } : { y: 0 }}
                 exit={prefersReducedMotion ? { opacity: 0 } : { y: "100%" }}
@@ -281,8 +283,8 @@ export function Jargon({ term, children, className }: JargonProps) {
                 </button>
 
                 {/* Content */}
-                <div className="overflow-y-auto px-6 pb-safe pt-2 pb-8">
-                  <SheetContent term={jargonData} />
+                <div className="overflow-y-auto px-6 pt-2 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+                  <SheetContent term={jargonData} termKey={term} />
                 </div>
               </motion.div>
             </>
@@ -332,7 +334,7 @@ function TooltipContent({ term }: { term: JargonTerm }) {
 /**
  * Mobile bottom sheet content
  */
-function SheetContent({ term }: { term: JargonTerm }) {
+function SheetContent({ term, termKey }: { term: JargonTerm; termKey: string }) {
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -341,9 +343,9 @@ function SheetContent({ term }: { term: JargonTerm }) {
           <Lightbulb className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-foreground">{term.term}</h3>
-          <p className="text-sm text-muted-foreground">
-            {term.short.split(",")[0].trim()}
+          <h3 id={`jargon-sheet-title-${termKey}`} className="text-xl font-bold text-foreground">{term.term}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {term.short}
           </p>
         </div>
       </div>
