@@ -18,6 +18,7 @@
 #   --force-reinstall Start fresh, ignore existing state
 #   --reset-state     Delete state file and exit (for debugging)
 #   --interactive     Enable interactive prompts for resume decisions
+#   --skip-preflight  Skip pre-flight system validation
 # ============================================================
 
 set -euo pipefail
@@ -50,6 +51,9 @@ export ACFS_FORCE_RESUME=false
 export ACFS_FORCE_REINSTALL=false
 export ACFS_INTERACTIVE=false
 RESET_STATE_ONLY=false
+
+# Preflight options
+SKIP_PREFLIGHT=false
 
 # Target user configuration
 # When running as root, we install for ubuntu user, not root
@@ -294,6 +298,10 @@ parse_args() {
                 export ACFS_INTERACTIVE=true
                 shift
                 ;;
+            --skip-preflight)
+                SKIP_PREFLIGHT=true
+                shift
+                ;;
             *)
                 log_warn "Unknown option: $1"
                 shift
@@ -307,6 +315,58 @@ parse_args() {
 # ============================================================
 command_exists() {
     command -v "$1" &>/dev/null
+}
+
+# ============================================================
+# Pre-Flight Validation
+# ============================================================
+# Runs system validation checks before installation begins.
+# Related beads: agentic_coding_flywheel_setup-545
+
+run_preflight_checks() {
+    log_step "0/10" "Running pre-flight validation..."
+
+    local preflight_script=""
+
+    # Try to find preflight script in different locations
+    if [[ -n "${SCRIPT_DIR:-}" ]] && [[ -f "$SCRIPT_DIR/scripts/preflight.sh" ]]; then
+        preflight_script="$SCRIPT_DIR/scripts/preflight.sh"
+    elif [[ -f "./scripts/preflight.sh" ]]; then
+        preflight_script="./scripts/preflight.sh"
+    elif [[ -f "/tmp/acfs-preflight.sh" ]]; then
+        preflight_script="/tmp/acfs-preflight.sh"
+    else
+        # Download preflight script for curl | bash scenario
+        log_detail "Downloading preflight script..."
+        if acfs_curl "$ACFS_RAW/scripts/preflight.sh" -o /tmp/acfs-preflight.sh 2>/dev/null; then
+            chmod +x /tmp/acfs-preflight.sh
+            preflight_script="/tmp/acfs-preflight.sh"
+        else
+            log_warn "Could not download preflight script - skipping checks"
+            return 0
+        fi
+    fi
+
+    # Run preflight checks (quiet mode, just check exit code)
+    local exit_code=0
+    if ! bash "$preflight_script" 2>&1; then
+        exit_code=$?
+    fi
+
+    if [[ $exit_code -ne 0 ]]; then
+        echo "" >&2
+        log_error "Pre-flight validation failed!"
+        echo "" >&2
+        log_info "Run preflight checks for details:"
+        log_info "  bash $preflight_script"
+        echo "" >&2
+        log_info "Use --skip-preflight to bypass (not recommended)"
+        echo "" >&2
+        exit 1
+    fi
+
+    log_success "[0/10] Pre-flight validation passed"
+    echo ""
 }
 
 ACFS_CURL_BASE_ARGS=(-fsSL)
@@ -1640,6 +1700,11 @@ main() {
     if [[ "$DRY_RUN" == "true" ]]; then
         log_warn "Dry run mode - no changes will be made"
         echo ""
+    fi
+
+    # Run pre-flight validation (Phase 0)
+    if [[ "$SKIP_PREFLIGHT" != "true" ]]; then
+        run_preflight_checks
     fi
 
     if [[ "$PRINT_MODE" == "true" ]]; then
