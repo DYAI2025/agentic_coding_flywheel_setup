@@ -25,7 +25,12 @@ ACFS_VERSION="0.1.0"
 ACFS_RAW="https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main"
 # Note: ACFS_HOME is set after TARGET_HOME is determined
 ACFS_LOG_DIR="/var/log/acfs"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# SCRIPT_DIR is empty when running via curl|bash (BASH_SOURCE is unset)
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    SCRIPT_DIR=""
+fi
 
 # Default options
 YES_MODE=false
@@ -69,6 +74,12 @@ install_gum_early() {
     # Already have gum? Great!
     if command -v gum &>/dev/null; then
         HAS_GUM=true
+        return 0
+    fi
+
+    # Respect dry-run / print-only modes: do not modify the system just to
+    # improve UI.
+    if [[ "${DRY_RUN:-false}" == "true" ]] || [[ "${PRINT_MODE:-false}" == "true" ]]; then
         return 0
     fi
 
@@ -695,15 +706,24 @@ setup_shell() {
     install_asset "acfs/zsh/acfs.zshrc" "$ACFS_HOME/zsh/acfs.zshrc"
     $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/zsh/acfs.zshrc"
 
-    # Create minimal .zshrc loader for target user
-    cat > "$TARGET_HOME/.zshrc" << 'EOF'
+    # Create minimal .zshrc loader for target user (backup existing if needed)
+    local user_zshrc="$TARGET_HOME/.zshrc"
+    if [[ -f "$user_zshrc" ]] && ! grep -q "^# ACFS loader" "$user_zshrc" 2>/dev/null; then
+        local backup
+        backup="$user_zshrc.pre-acfs.$(date +%Y%m%d%H%M%S)"
+        log_warn "Existing .zshrc found; backing up to $(basename "$backup")"
+        $SUDO cp "$user_zshrc" "$backup"
+        $SUDO chown "$TARGET_USER:$TARGET_USER" "$backup" 2>/dev/null || true
+    fi
+
+    cat > "$user_zshrc" << 'EOF'
 # ACFS loader
 source "$HOME/.acfs/zsh/acfs.zshrc"
 
 # User overrides live here forever
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
 EOF
-    $SUDO chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.zshrc"
+    $SUDO chown "$TARGET_USER:$TARGET_USER" "$user_zshrc"
 
     # Set zsh as default shell for target user
     local current_shell
