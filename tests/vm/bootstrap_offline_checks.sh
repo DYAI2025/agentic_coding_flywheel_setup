@@ -28,6 +28,14 @@ require_cmd grep
 require_cmd cp
 require_cmd mktemp
 
+# This test exercises install.sh's archive bootstrap which uses GNU tar flags
+# like --wildcards/--strip-components/--wildcards-match-slash.
+# On macOS (BSD tar), these flags are not available; skip locally.
+if ! tar --help 2>/dev/null | grep -q -- '--wildcards'; then
+  log "Skipping offline bootstrap checks: GNU tar required (missing --wildcards)"
+  exit 0
+fi
+
 create_archive() {
   local archive_path="$1"
   log "Creating archive: $archive_path"
