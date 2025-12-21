@@ -1153,7 +1153,8 @@ ubuntu_recover_failed_upgrade() {
 
 # Create diagnostic dump on failure
 ubuntu_create_diagnostic_dump() {
-    local dump_file="/var/log/acfs/upgrade_diagnostic_$(date +%Y%m%d_%H%M%S).txt"
+    local dump_file
+    dump_file="/var/log/acfs/upgrade_diagnostic_$(date +%Y%m%d_%H%M%S).txt"
 
     mkdir -p /var/log/acfs
 
