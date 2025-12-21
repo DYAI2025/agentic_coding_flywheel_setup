@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 
 /**
  * Standard timeouts for different scenarios.
@@ -27,7 +27,7 @@ function urlPathWithOptionalQuery(pathname: string): RegExp {
  * This avoids repeating the same setup code in every test.
  */
 async function setupWizardState(
-  page: Parameters<Parameters<typeof test>[1]>[0]["page"],
+  page: Page,
   options: { os?: "mac" | "windows"; ip?: string } = {}
 ) {
   await page.goto("/");
