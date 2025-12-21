@@ -29,6 +29,8 @@
 curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh?$(date +%s)" | bash -s -- --yes --mode vibe
 ```
 
+The installer is **idempotent**—if interrupted, simply re-run it. It will automatically resume from the last completed phase without prompts.
+
 ---
 
 ## TL;DR
@@ -459,9 +461,37 @@ graph TD
 | Property | Description |
 |----------|-------------|
 | **Idempotent** | Safe to re-run; skips already-installed tools |
-| **Checkpointed** | Phases resume on failure |
+| **Checkpointed** | Phases resume automatically from `~/.acfs/state.json` |
+| **Pre-flight validated** | Run `scripts/preflight.sh` to catch issues before install |
 | **Logged** | Colored output with progress indicators |
 | **Modular** | Each category is a separate sourceable script |
+
+### Resume Capability
+
+The installer tracks progress in `~/.acfs/state.json`. If interrupted:
+- Re-run the same command—it resumes from the last completed phase
+- No prompts or confirmations needed (with `--yes`)
+- Already-installed tools are detected and skipped
+
+To force a fresh reinstall of all tools:
+```bash
+curl -fsSL "..." | bash -s -- --yes --mode vibe --force-reinstall
+```
+
+### Pre-Flight Check
+
+Before running the full installer, validate your system:
+```bash
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/scripts/preflight.sh" | bash
+```
+
+This checks:
+- OS compatibility (Ubuntu 22.04+, 24.04+ recommended)
+- Architecture (x86_64 or ARM64)
+- Memory and disk space
+- Network connectivity to required URLs
+- APT lock status
+- Potential conflicts (nvm, pyenv, existing ACFS)
 
 ### Console Output
 
@@ -735,6 +765,31 @@ Doctor checks can be generated from the manifest (`scripts/generated/doctor_chec
 acfs doctor          # Interactive colorful output
 acfs doctor --json   # Machine-readable JSON output
 acfs doctor --quiet  # Exit code only (0=healthy, 1=issues)
+acfs doctor --deep   # Run functional tests (auth, connections)
+```
+
+### Deep Checks (`--deep`)
+
+The `--deep` flag runs functional tests beyond binary existence:
+
+| Category | Checks |
+|----------|--------|
+| **Agent Auth** | Claude config, Codex API key, Gemini credentials |
+| **Database** | PostgreSQL connection, ubuntu role exists |
+| **Cloud CLIs** | `gh auth status`, `wrangler whoami`, Supabase/Vercel tokens |
+| **Vault** | `VAULT_ADDR` configured |
+
+Deep checks use 5-second timeouts to avoid hanging on network issues. Results are cached for 5 minutes to speed up repeated runs.
+
+Example output:
+```
+Deep Checks
+  ✔ Claude auth configured
+  ✔ PostgreSQL connection working
+  ⚠ Codex API key not found (set OPENAI_API_KEY)
+  ✔ GitHub CLI authenticated
+
+8/9 functional tests passed in 3.2s
 ```
 
 ---
