@@ -63,6 +63,44 @@ ACFS_ERROR="#f38ba8"
 ACFS_MUTED="#6c7086"
 
 # ============================================================
+# Install gum FIRST for beautiful UI from the start
+# ============================================================
+install_gum_early() {
+    # Already have gum? Great!
+    if command -v gum &>/dev/null; then
+        HAS_GUM=true
+        return 0
+    fi
+
+    # Need root/sudo for apt operations
+    local sudo_cmd=""
+    if [[ $EUID -ne 0 ]]; then
+        if command -v sudo &>/dev/null; then
+            sudo_cmd="sudo"
+        else
+            # Can't install gum without sudo, fall back to plain output
+            return 0
+        fi
+    fi
+
+    # Quick apt update and gum install (silent unless it fails)
+    echo -e "\033[0;90m    → Installing gum for enhanced UI...\033[0m" >&2
+
+    # Add Charm apt repo
+    $sudo_cmd mkdir -p /etc/apt/keyrings 2>/dev/null || true
+    if curl "${ACFS_CURL_BASE_ARGS[@]}" https://repo.charm.sh/apt/gpg.key 2>/dev/null | \
+        $sudo_cmd gpg --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null; then
+        echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | \
+            $sudo_cmd tee /etc/apt/sources.list.d/charm.list > /dev/null 2>&1
+        $sudo_cmd apt-get update -y >/dev/null 2>&1 || true
+        if $sudo_cmd apt-get install -y gum >/dev/null 2>&1; then
+            HAS_GUM=true
+            echo -e "\033[0;32m    ✓ gum installed - enhanced UI enabled!\033[0m" >&2
+        fi
+    fi
+}
+
+# ============================================================
 # ASCII Art Banner
 # ============================================================
 print_banner() {
@@ -706,22 +744,12 @@ install_github_cli() {
 install_cli_tools() {
     log_step "4/9" "Installing CLI tools..."
 
-    # Install gum first for enhanced UI
-    if ! command_exists gum; then
-        log_detail "Installing gum for glamorous shell scripts"
-        $SUDO mkdir -p /etc/apt/keyrings
-        acfs_curl https://repo.charm.sh/apt/gpg.key | $SUDO gpg --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null || true
-        echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | $SUDO tee /etc/apt/sources.list.d/charm.list > /dev/null
-        $SUDO apt-get update -y
-        $SUDO apt-get install -y gum 2>/dev/null || true
-
-        # Update HAS_GUM if install succeeded
-        if command -v gum &>/dev/null; then
-            HAS_GUM=true
-            log_success "gum installed - enhanced UI enabled"
-        fi
+    # Note: gum is installed early (before banner) via install_gum_early()
+    # Just verify it's working
+    if command_exists gum; then
+        log_detail "gum already installed (installed early for enhanced UI)"
     else
-        log_detail "gum already installed"
+        log_detail "gum not available (optional)"
     fi
 
     log_detail "Installing required apt packages"
@@ -1383,7 +1411,10 @@ $summary_content"
 main() {
     parse_args "$@"
 
-    # Print beautiful ASCII banner
+    # Install gum FIRST so the entire script looks amazing
+    install_gum_early
+
+    # Print beautiful ASCII banner (now with gum if available!)
     print_banner
 
     if [[ "$DRY_RUN" == "true" ]]; then
