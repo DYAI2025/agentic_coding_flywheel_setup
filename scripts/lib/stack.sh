@@ -17,18 +17,6 @@ fi
 # Configuration
 # ============================================================
 
-# Tool installer URLs (with cache busting where needed)
-declare -A STACK_URLS=(
-    [ntm]="https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh"
-    [mcp_agent_mail]="https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh"
-    [ubs]="https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh"
-    [bv]="https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh"
-    [cass]="https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh"
-    [cm]="https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh"
-    [caam]="https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh"
-    [slb]="https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
-)
-
 # Tool commands for verification
 declare -A STACK_COMMANDS=(
     [ntm]="ntm"
@@ -128,12 +116,12 @@ _stack_run_installer() {
         return 1
     fi
 
-    local url="${STACK_URLS[$tool]:-}"
+    local url="${KNOWN_INSTALLERS[$tool]:-}"
     local expected_sha256
     expected_sha256="$(get_checksum "$tool")"
 
     if [[ -z "$url" ]]; then
-        log_warn "No installer URL configured for $tool"
+        log_warn "No installer URL configured for $tool (KNOWN_INSTALLERS)"
         return 1
     fi
     if [[ -z "$expected_sha256" ]]; then

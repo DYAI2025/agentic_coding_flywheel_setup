@@ -95,6 +95,11 @@ if command -v gum &>/dev/null; then
 fi
 
 # ============================================================
+# Prevent logging.sh from overwriting our inline gum-enhanced functions
+# ============================================================
+export _ACFS_LOGGING_SH_LOADED=1
+
+# ============================================================
 # Source context tracking library for try_step() wrapper
 # ============================================================
 _source_context_lib() {
