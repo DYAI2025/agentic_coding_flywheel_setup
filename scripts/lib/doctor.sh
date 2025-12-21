@@ -891,7 +891,7 @@ check_claude_auth() {
     fi
 
     # Check if binary works
-    if ! claude --version &>/dev/null 2>&1; then
+    if ! claude --version &>/dev/null; then
         check "deep.agent.claude_auth" "Claude Code auth" "fail" "binary error" "Reinstall: bun install -g @anthropic-ai/claude-code"
         return
     fi
@@ -904,7 +904,7 @@ check_claude_auth() {
     fi
 
     # Try low-cost API check: --print-system-info doesn't make API calls but verifies setup
-    if timeout 5 claude --print-system-info &>/dev/null 2>&1; then
+    if timeout 5 claude --print-system-info &>/dev/null; then
         check "deep.agent.claude_auth" "Claude Code auth" "pass" "authenticated"
     else
         # Config exists but system info fails - partial setup
@@ -925,7 +925,7 @@ check_codex_auth() {
     fi
 
     # Check if binary works
-    if ! codex --version &>/dev/null 2>&1; then
+    if ! codex --version &>/dev/null; then
         check "deep.agent.codex_auth" "Codex CLI auth" "fail" "binary error" "Reinstall: bun install -g @openai/codex@latest"
         return
     fi
@@ -984,7 +984,7 @@ check_gemini_auth() {
     fi
 
     # Check if binary works
-    if ! gemini --version &>/dev/null 2>&1; then
+    if ! gemini --version &>/dev/null; then
         check "deep.agent.gemini_auth" "Gemini CLI auth" "fail" "binary error" "Reinstall: bun install -g @google/gemini-cli@latest"
         return
     fi
@@ -1042,13 +1042,13 @@ check_postgres_connection() {
 
     # Try to connect to local postgres (5 second timeout, no password prompt)
     # Use -w to avoid password prompts (would hang)
-    if timeout 5 psql -w -h localhost -U postgres -c 'SELECT 1' &>/dev/null 2>&1; then
+    if timeout 5 psql -w -h localhost -U postgres -c 'SELECT 1' &>/dev/null; then
         check "deep.db.postgres_connect" "PostgreSQL connection" "pass" "localhost:5432"
-    elif timeout 5 psql -w -h /var/run/postgresql -U postgres -c 'SELECT 1' &>/dev/null 2>&1; then
+    elif timeout 5 psql -w -h /var/run/postgresql -U postgres -c 'SELECT 1' &>/dev/null; then
         check "deep.db.postgres_connect" "PostgreSQL connection" "pass" "unix socket"
     else
         # Try connecting as current user
-        if timeout 5 psql -w -c 'SELECT 1' &>/dev/null 2>&1; then
+        if timeout 5 psql -w -c 'SELECT 1' &>/dev/null; then
             check "deep.db.postgres_connect" "PostgreSQL connection" "pass" "current user"
         else
             check "deep.db.postgres_connect" "PostgreSQL connection" "warn" "connection failed" "sudo systemctl status postgresql"
@@ -1120,7 +1120,7 @@ check_vault_configured() {
     fi
 
     # VAULT_ADDR is set, try to connect
-    if timeout 10 vault status &>/dev/null 2>&1; then
+    if timeout 10 vault status &>/dev/null; then
         check "deep.cloud.vault_status" "Vault status" "pass" "connected to $VAULT_ADDR"
     else
         check "deep.cloud.vault_status" "Vault status" "warn" "not reachable" "Check VAULT_ADDR and network"
@@ -1207,7 +1207,7 @@ check_supabase_auth() {
     fi
 
     # Check if binary works
-    if ! timeout 5 supabase --version &>/dev/null 2>&1; then
+    if ! timeout 5 supabase --version &>/dev/null; then
         check "deep.cloud.supabase" "Supabase CLI" "fail" "binary error" "Reinstall: bun install -g supabase"
         return
     fi
