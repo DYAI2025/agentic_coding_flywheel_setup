@@ -1010,7 +1010,7 @@ export default function WorkflowPage() {
                 makes a mistake, the <em>other agents will probably catch and fix it themselves</em>.
               </p>
               <p className="text-muted-foreground">
-                <strong className="text-foreground">The reality:</strong> Run these prompts on 7+ projects
+                <strong className="text-foreground">The reality:</strong> Run these prompts on 8+ projects
                 daily, keeping 3 machines busy constantly. Come back 3+ hours later to see incredible
                 amounts of work done autonomously. The compound effect is incredible!
               </p>

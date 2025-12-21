@@ -101,6 +101,8 @@ run_one() {
       su - ubuntu -c "zsh -ic '\''acfs doctor'\''"
       su - ubuntu -c "zsh -ic '\''onboard --help >/dev/null'\''"
       su - ubuntu -c "zsh -ic '\''ntm --help >/dev/null'\''"
+      su - ubuntu -c "zsh -ic '\''gh --version >/dev/null'\''"
+      su - ubuntu -c "zsh -ic '\''jq --version >/dev/null'\''"
       su - ubuntu -c "zsh -ic '\''codex --version >/dev/null'\''"
       su - ubuntu -c "zsh -ic '\''gemini --version >/dev/null'\''"
       su - ubuntu -c "zsh -ic '\''claude --version >/dev/null'\''"
@@ -117,4 +119,3 @@ done
 
 echo "" >&2
 echo "✅ All requested Ubuntu installer tests passed." >&2
-

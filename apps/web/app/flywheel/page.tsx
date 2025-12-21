@@ -80,7 +80,7 @@ function HeroSection() {
         >
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium text-primary">
-            7+ projects • 6+ agents • Autonomous progress
+            8+ projects • 6+ agents • Autonomous progress
           </span>
         </div>
 
@@ -279,7 +279,7 @@ function WorkflowSection() {
           </h2>
           <p className="mt-4 text-base text-muted-foreground lg:text-lg">
             These aren&apos;t hypothetical scenarios. These are actual daily workflows running across
-            7+ projects with multiple AI agents.
+            8+ projects with multiple AI agents.
           </p>
         </div>
 

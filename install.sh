@@ -680,18 +680,27 @@ install_github_cli() {
     # Fallback: add official GitHub CLI apt repo and retry.
     log_detail "gh not available in default apt repos; adding GitHub CLI apt repo"
 
-    $SUDO mkdir -p /etc/apt/keyrings
+    if ! $SUDO mkdir -p /etc/apt/keyrings; then
+        return 1
+    fi
     if ! acfs_curl https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
         $SUDO dd of=/etc/apt/keyrings/githubcli-archive-keyring.gpg status=none 2>/dev/null; then
         return 1
     fi
     $SUDO chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg 2>/dev/null || true
 
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
-        $SUDO tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    local arch
+    arch="$(dpkg --print-architecture 2>/dev/null || echo amd64)"
+    if ! echo "deb [arch=$arch signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
+        $SUDO tee /etc/apt/sources.list.d/github-cli.list > /dev/null; then
+        return 1
+    fi
 
     $SUDO apt-get update -y >/dev/null 2>&1 || true
-    $SUDO apt-get install -y gh >/dev/null 2>&1
+    if ! $SUDO apt-get install -y gh >/dev/null 2>&1; then
+        return 1
+    fi
+    return 0
 }
 
 install_cli_tools() {

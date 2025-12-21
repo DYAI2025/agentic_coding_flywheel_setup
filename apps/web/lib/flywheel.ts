@@ -4,7 +4,7 @@
 //
 // A self-reinforcing system that enables remarkable velocity in
 // complex software development. Multiple AI agents working in
-// parallel across 7+ projects, reviewing each other's work,
+// parallel across 8+ projects, reviewing each other's work,
 // creating and executing tasks, making incredible autonomous
 // progress.
 //
@@ -625,7 +625,7 @@ export const flywheelDescription = {
   title: "The Agentic Coding Flywheel",
   subtitle: "Eight tools that create unheard-of velocity",
   description:
-    "A self-reinforcing system that enables multiple AI agents to work in parallel across 7+ projects, reviewing each other's work, creating and executing tasks, and making incredible autonomous progress while you're away.",
+    "A self-reinforcing system that enables multiple AI agents to work in parallel across 8+ projects, reviewing each other's work, creating and executing tasks, and making incredible autonomous progress while you're away.",
   philosophy: [
     {
       title: "Unix Philosophy",
@@ -645,7 +645,7 @@ export const flywheelDescription = {
     {
       title: "Battle-Tested",
       description:
-        "Born from daily use across 7+ projects with multiple AI agents running simultaneously.",
+        "Born from daily use across 8+ projects with multiple AI agents running simultaneously.",
     },
   ],
   metrics: {
