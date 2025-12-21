@@ -33,10 +33,11 @@ fi
 
 # ------------------------------------------------------------
 # Effective selection (computed once after manifest_index)
+# Uses -g for global scope when sourced inside a function
 # ------------------------------------------------------------
-declare -A ACFS_EFFECTIVE_RUN=()
-declare -A ACFS_PLAN_REASON=()
-declare -A ACFS_PLAN_EXCLUDE_REASON=()
+declare -gA ACFS_EFFECTIVE_RUN=()
+declare -gA ACFS_PLAN_REASON=()
+declare -gA ACFS_PLAN_EXCLUDE_REASON=()
 ACFS_EFFECTIVE_PLAN=()
 
 acfs_resolve_selection() {
@@ -45,9 +46,11 @@ acfs_resolve_selection() {
         return 1
     fi
 
-    ACFS_EFFECTIVE_RUN=()
-    ACFS_PLAN_REASON=()
-    ACFS_PLAN_EXCLUDE_REASON=()
+    # Clear arrays while preserving their types
+    # Re-declare with -gA to ensure they remain global associative arrays
+    declare -gA ACFS_EFFECTIVE_RUN=()
+    declare -gA ACFS_PLAN_REASON=()
+    declare -gA ACFS_PLAN_EXCLUDE_REASON=()
     ACFS_EFFECTIVE_PLAN=()
 
     local -A module_exists=()
@@ -271,6 +274,27 @@ acfs_resolve_selection() {
 should_run_module() {
     local module_id="$1"
     [[ -n "${ACFS_EFFECTIVE_RUN[$module_id]:-}" ]]
+}
+
+# ------------------------------------------------------------
+# Legacy flag mapping (mjt.5.5)
+# Maps old-style --skip-* flags to SKIP_MODULES array
+# ------------------------------------------------------------
+acfs_apply_legacy_skips() {
+    # Map legacy flags to module skips
+    # These globals are set by parse_args in install.sh
+
+    if [[ "${SKIP_POSTGRES:-false}" == "true" ]]; then
+        SKIP_MODULES+=("db.postgres18")
+    fi
+
+    if [[ "${SKIP_VAULT:-false}" == "true" ]]; then
+        SKIP_MODULES+=("tools.vault")
+    fi
+
+    if [[ "${SKIP_CLOUD:-false}" == "true" ]]; then
+        SKIP_MODULES+=("cloud.wrangler" "cloud.supabase" "cloud.vercel")
+    fi
 }
 
 # ------------------------------------------------------------

@@ -367,6 +367,35 @@ parse_args() {
                 PRINT_PLAN_MODE=true
                 shift
                 ;;
+            --only)
+                # Add module to ONLY_MODULES list (for manifest-driven selection)
+                if [[ -z "${2:-}" ]]; then
+                    log_fatal "--only requires a module ID"
+                fi
+                ONLY_MODULES+=("$2")
+                shift 2
+                ;;
+            --only-phase)
+                # Add phase to ONLY_PHASES list
+                if [[ -z "${2:-}" ]]; then
+                    log_fatal "--only-phase requires a phase number"
+                fi
+                ONLY_PHASES+=("$2")
+                shift 2
+                ;;
+            --skip)
+                # Add module to SKIP_MODULES list
+                if [[ -z "${2:-}" ]]; then
+                    log_fatal "--skip requires a module ID"
+                fi
+                SKIP_MODULES+=("$2")
+                shift 2
+                ;;
+            --no-deps)
+                # Disable automatic dependency resolution
+                NO_DEPS=true
+                shift
+                ;;
             *)
                 log_warn "Unknown option: $1"
                 shift
@@ -512,24 +541,43 @@ print_execution_plan() {
     echo "======================"
     echo ""
     echo "Mode: $MODE"
-    echo "Effective modules: ${#ACFS_MODULES_IN_ORDER[@]}"
+    echo "Selected modules: ${#ACFS_EFFECTIVE_PLAN[@]} of ${#ACFS_MODULES_IN_ORDER[@]} available"
+    echo ""
+
+    # Show selection settings if non-default
+    if [[ ${#ONLY_MODULES[@]} -gt 0 ]]; then
+        echo "Selection: --only ${ONLY_MODULES[*]}"
+    elif [[ ${#ONLY_PHASES[@]} -gt 0 ]]; then
+        echo "Selection: --only-phase ${ONLY_PHASES[*]}"
+    fi
+    if [[ ${#SKIP_MODULES[@]} -gt 0 ]]; then
+        echo "Skipped:   --skip ${SKIP_MODULES[*]}"
+    fi
+    if [[ "${NO_DEPS:-false}" == "true" ]]; then
+        echo "⚠ --no-deps: dependencies NOT auto-installed"
+    fi
     echo ""
     echo "Execution order:"
     echo ""
 
     local idx=1
-    local module phase func key
-    for module in "${ACFS_MODULES_IN_ORDER[@]}"; do
+    local module phase func key reason
+    for module in "${ACFS_EFFECTIVE_PLAN[@]}"; do
         # Use key variable to prevent arithmetic evaluation with dots
         key="$module"
         phase="${ACFS_MODULE_PHASE[$key]:-?}"
         func="${ACFS_MODULE_FUNC[$key]:-?}"
-        printf "  %2d. [Phase %s] %s -> %s()\n" "$idx" "$phase" "$module" "$func"
-        ((idx++))
+        reason="${ACFS_PLAN_REASON[$key]:-}"
+        if [[ -n "$reason" ]]; then
+            printf "  %2d. [Phase %s] %s -> %s()  (%s)\n" "$idx" "$phase" "$module" "$func" "$reason"
+        else
+            printf "  %2d. [Phase %s] %s -> %s()\n" "$idx" "$phase" "$module" "$func"
+        fi
+        ((++idx))  # Use ++idx to avoid exit on zero under set -e
     done
 
     echo ""
-    echo "Options:"
+    echo "Legacy options (will be migrated to --skip):"
     echo "  --skip-postgres: $SKIP_POSTGRES"
     echo "  --skip-vault:    $SKIP_VAULT"
     echo "  --skip-cloud:    $SKIP_CLOUD"
@@ -2147,13 +2195,27 @@ main() {
     # This must happen BEFORE any handlers that need module data
     detect_environment
 
+    # Map legacy --skip-* flags to SKIP_MODULES (mjt.5.5)
+    # This allows --skip-postgres, --skip-vault, --skip-cloud to work
+    # through the manifest-driven selection engine
+    acfs_apply_legacy_skips
+
+    # Resolve module selection (mjt.5.4)
+    # Computes ACFS_EFFECTIVE_PLAN and ACFS_EFFECTIVE_RUN based on:
+    # - CLI flags (--only, --skip, --no-deps, --only-phase)
+    # - Legacy flags mapped above
+    # - Manifest defaults and dependency graph
+    if ! acfs_resolve_selection; then
+        exit 1
+    fi
+
     # Handle --list-modules: print available modules and exit (mjt.5.3)
     if [[ "$LIST_MODULES" == "true" ]]; then
         list_modules
         exit 0
     fi
 
-    # Handle --print-plan: print execution plan and exit (mjt.5.3)
+    # Handle --print-plan: print execution plan and exit (mjt.5.3/5.4)
     if [[ "$PRINT_PLAN_MODE" == "true" ]]; then
         print_execution_plan
         exit 0
