@@ -498,6 +498,7 @@ parse_args() {
                 ;;
             --skip-ubuntu-upgrade)
                 # Skip automatic Ubuntu version upgrade (nb4)
+                # shellcheck disable=SC2034  # used by run_ubuntu_upgrade_phase
                 SKIP_UBUNTU_UPGRADE=true
                 shift
                 ;;
@@ -507,10 +508,12 @@ parse_args() {
                     if [[ -z "${2:-}" ]]; then
                         log_fatal "--target-ubuntu requires a version (e.g., --target-ubuntu 25.10)"
                     fi
+                    # shellcheck disable=SC2034  # used by run_ubuntu_upgrade_phase
                     TARGET_UBUNTU_VERSION="$2"
                     shift 2
                 else
                     # Handle --target-ubuntu=25.10 format
+                    # shellcheck disable=SC2034  # used by run_ubuntu_upgrade_phase
                     TARGET_UBUNTU_VERSION="${1#*=}"
                     shift
                 fi
