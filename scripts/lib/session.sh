@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 # ============================================================
 # ACFS Installer - Session Export Library
 # Defines schema and validation for agent session exports
@@ -507,7 +508,7 @@ get_workspace_sessions() {
 # ============================================================
 
 # Export a session file with sanitization
-# Usage: export_session <session_path> [--format json|markdown] [--sanitize] [--output FILE]
+# Usage: export_session <session_path> [--format json|markdown] [--no-sanitize] [--output FILE]
 # Returns: Exported content to stdout (or file if --output specified)
 export_session() {
     local session_path=""
@@ -574,7 +575,7 @@ export_session() {
         # Create temp file for sanitization
         local tmpfile
         tmpfile=$(mktemp)
-        echo "$exported" > "$tmpfile"
+        printf '%s' "$exported" > "$tmpfile"
 
         # Apply sanitization
         if sanitize_session_export "$tmpfile"; then
@@ -590,7 +591,7 @@ export_session() {
 
     # Output
     if [[ -n "$output_file" ]]; then
-        echo "$exported" > "$output_file"
+        printf '%s' "$exported" > "$output_file"
         log_success "Exported to: $output_file"
     else
         echo "$exported"
@@ -652,4 +653,167 @@ convert_to_acfs_schema() {
             ]
         }
     ' 2>/dev/null
+}
+
+# ============================================================
+# SESSION IMPORT
+# ============================================================
+
+# Default session storage directory
+ACFS_SESSIONS_DIR="${ACFS_SESSIONS_DIR:-${HOME}/.acfs/sessions}"
+
+# Generate a unique session ID
+generate_session_id() {
+    head -c 4 /dev/urandom | xxd -p
+}
+
+# Import a session file for local viewing/reference
+# Usage: import_session <file> [--dry-run]
+import_session() {
+    local file=""
+    local dry_run=false
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --dry-run) dry_run=true; shift ;;
+            -*) log_warn "Unknown option: $1"; shift ;;
+            *) file="$1"; shift ;;
+        esac
+    done
+
+    if [[ -z "$file" ]]; then
+        log_error "Session file required"
+        log_info "Usage: import_session <file.json> [--dry-run]"
+        return 1
+    fi
+
+    if [[ ! -f "$file" ]]; then
+        log_error "File not found: $file"
+        return 1
+    fi
+
+    if ! jq -e . "$file" >/dev/null 2>&1; then
+        log_error "Invalid JSON: $file"
+        return 1
+    fi
+
+    # Detect format
+    local is_cass=false is_acfs=false
+    jq -e '.[0].sessionId' "$file" >/dev/null 2>&1 && is_cass=true
+    jq -e '.schema_version' "$file" >/dev/null 2>&1 && is_acfs=true
+
+    # Extract metadata
+    local session_id agent turn_count first_ts last_ts
+    if [[ "$is_cass" == "true" ]]; then
+        session_id=$(jq -r '.[0].sessionId // "unknown"' "$file")
+        agent=$(jq -r '.[0].agentId // "unknown"' "$file")
+        turn_count=$(jq 'length' "$file")
+        first_ts=$(jq -r '.[0].timestamp // ""' "$file")
+        last_ts=$(jq -r '.[-1].timestamp // ""' "$file")
+    elif [[ "$is_acfs" == "true" ]]; then
+        session_id=$(jq -r '.session_id // "unknown"' "$file")
+        agent=$(jq -r '.agent // "unknown"' "$file")
+        turn_count=$(jq '.stats.turns // 0' "$file")
+        first_ts=$(jq -r '.exported_at // ""' "$file")
+        last_ts="$first_ts"
+        local ver; ver=$(jq -r '.schema_version' "$file")
+        [[ "$ver" != "1" ]] && log_warn "Schema version $ver may not be compatible"
+    else
+        log_error "Unrecognized session format"; return 1
+    fi
+
+    echo ""
+    echo "Session Summary:"
+    echo "  Session ID: $session_id"
+    echo "  Agent: $agent"
+    echo "  Messages: $turn_count"
+    echo "  Time: ${first_ts%T*} to ${last_ts%T*}"
+
+    if [[ "$dry_run" == "true" ]]; then
+        echo ""; echo "(Dry run - nothing imported)"; return 0
+    fi
+
+    mkdir -p "$ACFS_SESSIONS_DIR"
+    local local_id; local_id=$(generate_session_id)
+    local dest="$ACFS_SESSIONS_DIR/${local_id}.json"
+
+    if [[ "$is_cass" == "true" ]]; then
+        convert_to_acfs_schema "$(cat "$file")" > "$dest"
+    else
+        cp "$file" "$dest"
+    fi
+
+    echo ""
+    echo "Imported as: $local_id"
+    echo "View with: show_session $local_id"
+}
+
+# Show an imported session
+# Usage: show_session <id> [--format json|markdown|summary]
+show_session() {
+    local session_id="" format="summary"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --format) format="$2"; shift 2 ;;
+            -*) shift ;;
+            *) session_id="$1"; shift ;;
+        esac
+    done
+
+    if [[ -z "$session_id" ]]; then
+        log_error "Session ID required"
+        return 1
+    fi
+
+    local file="$ACFS_SESSIONS_DIR/${session_id}.json"
+    if [[ ! -f "$file" ]]; then
+        log_error "Session not found: $session_id"
+        return 1
+    fi
+
+    case "$format" in
+        json) jq '.' "$file" ;;
+        markdown)
+            jq -r '
+                "# Session: \(.session_id)\n",
+                "**Agent:** \(.agent)  ",
+                "**Turns:** \(.stats.turns // 0)\n",
+                "## Transcript\n",
+                (.sanitized_transcript[:20][] |
+                    "### \(.role) (\(.timestamp[:19]))\n\n\(.content)\n"
+                )
+            ' "$file" 2>/dev/null
+            ;;
+        *)
+            jq -r '
+                "Session: \(.session_id)",
+                "Agent: \(.agent)  Model: \(.model // "unknown")",
+                "Turns: \(.stats.turns // 0)\n",
+                "First exchanges:",
+                (.sanitized_transcript[:4][] |
+                    "  [\(.role)]: \(.content[:80] | gsub("\n"; " "))..."
+                )
+            ' "$file" 2>/dev/null
+            ;;
+    esac
+}
+
+# List imported sessions
+list_imported_sessions() {
+    if [[ ! -d "$ACFS_SESSIONS_DIR" ]]; then
+        echo "No imported sessions. Import with: import_session <file.json>"
+        return 0
+    fi
+
+    echo ""
+    echo "Imported Sessions:"
+    printf "  %-10s %-12s %-20s\n" "ID" "AGENT" "SESSION_ID"
+    echo "  $(printf '%.0s-' {1..50})"
+
+    for f in "$ACFS_SESSIONS_DIR"/*.json; do
+        [[ -f "$f" ]] || continue
+        local id; id=$(basename "$f" .json)
+        jq -r '"  \("'"$id"'")   \(.agent[:12])   \(.session_id)"' "$f" 2>/dev/null
+    done
 }
