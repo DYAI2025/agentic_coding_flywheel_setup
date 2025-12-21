@@ -626,6 +626,15 @@ upgrade_update_motd() {
     local message="${1:-Ubuntu upgrade in progress}"
     local motd_file="/etc/update-motd.d/00-acfs-upgrade"
 
+    # Truncate message to fit in 60-char content area (leaving space for "║  " and " ║")
+    local max_len=60
+    if [[ ${#message} -gt $max_len ]]; then
+        message="${message:0:$((max_len - 3))}..."
+    fi
+    # Pad message to fill the box width
+    local padded_msg
+    padded_msg=$(printf "%-${max_len}s" "$message")
+
     # Create MOTD script
     cat > "$motd_file" << 'MOTD_HEADER'
 #!/bin/bash
@@ -635,15 +644,15 @@ echo "║                    ACFS UPGRADE IN PROGRESS                    ║"
 echo "╠════════════════════════════════════════════════════════════════╣"
 MOTD_HEADER
 
-    # Add the dynamic message
+    # Add the dynamic message (properly padded)
     cat >> "$motd_file" << MOTD_MESSAGE
-echo "║  $message"
+echo "║  ${padded_msg} ║"
 MOTD_MESSAGE
 
     cat >> "$motd_file" << 'MOTD_FOOTER'
 echo "║                                                                ║"
 echo "║  The system will reboot automatically when each upgrade       ║"
-echo "║  step completes. Do not interrupt this process.              ║"
+echo "║  step completes. Do not interrupt this process.               ║"
 echo "║                                                                ║"
 echo "║  View logs: journalctl -u acfs-upgrade-resume -f              ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
@@ -1117,13 +1126,19 @@ _dpkg_is_locked() {
         return $?
     fi
 
-    # Last resort: check if lock file exists and has content
+    # Last resort: check if lock file exists and any apt/dpkg process is running
     # This is less reliable but better than nothing
     if [[ -f "$lock_file" ]]; then
-        # Check if any apt/dpkg process is running
-        # Use -f for pattern match (not -x which requires exact match)
-        pgrep -f "apt|apt-get|dpkg|aptitude" >/dev/null 2>&1
-        return $?
+        # Check for common package manager process names
+        # Use pgrep -x for exact process name matching to avoid false positives
+        # (e.g., matching "cat /var/log/apt/history.log")
+        pgrep -x "apt" >/dev/null 2>&1 && return 0
+        pgrep -x "apt-get" >/dev/null 2>&1 && return 0
+        pgrep -x "dpkg" >/dev/null 2>&1 && return 0
+        pgrep -x "aptitude" >/dev/null 2>&1 && return 0
+        pgrep -x "unattended-upgr" >/dev/null 2>&1 && return 0
+        # No matching process found
+        return 1
     fi
 
     return 1  # Not locked
