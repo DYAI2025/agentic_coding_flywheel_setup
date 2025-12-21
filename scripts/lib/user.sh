@@ -25,6 +25,31 @@ fi
 ACFS_TARGET_USER="${ACFS_TARGET_USER:-ubuntu}"
 ACFS_TARGET_HOME="/home/$ACFS_TARGET_USER"
 
+# Generate a random password robustly
+_generate_random_password() {
+    # Try openssl first (most standard)
+    if command -v openssl &>/dev/null; then
+        openssl rand -base64 32
+        return 0
+    fi
+
+    # Fallback to python3 (standard on Ubuntu)
+    if command -v python3 &>/dev/null; then
+        python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+        return 0
+    fi
+
+    # Fallback to /dev/urandom (standard on Linux)
+    if [[ -r /dev/urandom ]]; then
+        # Take first 32 alphanumeric chars
+        tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32
+        return 0
+    fi
+
+    # Last resort: date hash (better than empty)
+    date +%s%N | sha256sum | head -c 32
+}
+
 # Ensure target user exists
 # Creates user if missing, adds to required groups
 ensure_user() {
@@ -36,8 +61,13 @@ ensure_user() {
 
         # Generate random password (user will use SSH key)
         local passwd
-        passwd=$(openssl rand -base64 32)
-        echo "$target:$passwd" | $SUDO chpasswd
+        passwd=$(_generate_random_password)
+        
+        if [[ -n "$passwd" ]]; then
+            echo "$target:$passwd" | $SUDO chpasswd
+        else
+            log_warn "Could not generate password for $target (openssl/python/urandom missing)"
+        fi
     else
         log_detail "User $target already exists"
     fi

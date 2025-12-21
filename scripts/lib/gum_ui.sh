@@ -320,15 +320,24 @@ install_gum() {
 
     gum_detail "Installing gum for enhanced UI..."
 
+    local sudo_cmd=""
+    if [[ $EUID -ne 0 ]]; then
+        if command -v sudo &>/dev/null; then
+            sudo_cmd="sudo"
+        else
+            gum_warn "sudo not found, trying installation without it..."
+        fi
+    fi
+
     # Try different installation methods
     if command -v brew &>/dev/null; then
         brew install gum
     elif command -v apt-get &>/dev/null; then
         # Add charm repository
-        sudo mkdir -p /etc/apt/keyrings
-        curl --proto '=https' --proto-redir '=https' -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
-        echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-        sudo apt-get update && sudo apt-get install -y gum
+        $sudo_cmd mkdir -p /etc/apt/keyrings
+        curl --proto '=https' --proto-redir '=https' -fsSL https://repo.charm.sh/apt/gpg.key | $sudo_cmd gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | $sudo_cmd tee /etc/apt/sources.list.d/charm.list
+        $sudo_cmd apt-get update && $sudo_cmd apt-get install -y gum
     elif command -v go &>/dev/null; then
         go install github.com/charmbracelet/gum@latest
     else

@@ -202,11 +202,11 @@ export default function SecurityDocsPage() {
       <Card className="space-y-4 p-6">
         <h2 className="text-lg font-semibold tracking-tight">Services without Google SSO</h2>
         <p className="text-sm text-muted-foreground">
-          Some services don't support Google SSO (or you may choose not to use it). For those:
+          Some services don&apos;t support Google SSO (or you may choose not to use it). For those:
         </p>
         <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
           <li>Use a strong, unique password (password manager recommended).</li>
-          <li>Enable the service's built-in 2FA.</li>
+          <li>Enable the service&apos;s built-in 2FA.</li>
           <li>Prefer authenticator apps or security keys over SMS.</li>
         </ul>
       </Card>

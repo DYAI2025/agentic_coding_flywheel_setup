@@ -198,7 +198,7 @@ mark_completed() {
 
     if command -v jq &>/dev/null; then
         local tmp
-        tmp=$(mktemp "${TMPDIR:-/tmp}/acfs_onboard.XXXXXX" 2>/dev/null) || tmp="/tmp/acfs_onboard_temp.$"
+        tmp=$(mktemp "${TMPDIR:-/tmp}/acfs_onboard.XXXXXX" 2>/dev/null) || tmp="/tmp/acfs_onboard_temp.$$"
         jq --argjson lesson "$lesson" '
             .completed = (.completed + [$lesson] | unique | sort) |
             .current = (if $lesson < 8 then $lesson + 1 else $lesson end) |

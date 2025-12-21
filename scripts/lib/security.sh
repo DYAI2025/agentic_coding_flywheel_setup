@@ -21,6 +21,12 @@ fi
 # Configuration
 # ============================================================
 
+# Check if running in interactive mode
+# Returns 0 if interactive, 1 if non-interactive
+_acfs_is_interactive() {
+    [[ "${ACFS_INTERACTIVE:-true}" == "true" ]] && [[ -t 0 ]]
+}
+
 # curl defaults: enforce HTTPS (including redirects) when supported
 ACFS_CURL_BASE_ARGS=(-fsSL)
 if curl --help all 2>/dev/null | grep -q -- '--proto'; then
