@@ -5,7 +5,7 @@
 # ============================================================
 # Data-only manifest index. Safe to source.
 
-ACFS_MANIFEST_SHA256="9bd0a905abbb7bd9efdb6e4359b823c39c9d906512b8414c2e3658474e2bcf3d"
+ACFS_MANIFEST_SHA256="e3c9295b5167967a903810f321fe4f9c829171854a1bdd42b53282dbdab7a5de"
 
 ACFS_MODULES_IN_ORDER=(
   "base.system"
@@ -149,14 +149,14 @@ declare -A ACFS_MODULE_CATEGORY=(
   ["lang.uv"]="lang"
   ["lang.rust"]="lang"
   ["lang.go"]="lang"
-  ["tools.atuin"]="lang"
-  ["tools.zoxide"]="lang"
-  ["tools.ast_grep"]="lang"
+  ["tools.atuin"]="tools"
+  ["tools.zoxide"]="tools"
+  ["tools.ast_grep"]="tools"
   ["agents.claude"]="agents"
   ["agents.codex"]="agents"
   ["agents.gemini"]="agents"
-  ["tools.vault"]="cloud"
-  ["db.postgres18"]="cloud"
+  ["tools.vault"]="tools"
+  ["db.postgres18"]="db"
   ["cloud.wrangler"]="cloud"
   ["cloud.supabase"]="cloud"
   ["cloud.vercel"]="cloud"

@@ -232,7 +232,7 @@ modules:
   # Additional CLI tools in phase 6
   - id: tools.atuin
     description: Atuin shell history (Ctrl-R superpowers)
-    category: lang
+    category: tools
     phase: 6
     run_as: target_user
     optional: false
@@ -252,7 +252,7 @@ modules:
 
   - id: tools.zoxide
     description: Zoxide (better cd)
-    category: lang
+    category: tools
     phase: 6
     run_as: target_user
     optional: false
@@ -272,7 +272,7 @@ modules:
 
   - id: tools.ast_grep
     description: ast-grep (used by UBS for syntax-aware scanning)
-    category: lang
+    category: tools
     phase: 6
     run_as: target_user
     optional: false
@@ -354,7 +354,7 @@ modules:
   # ============================================================
   - id: tools.vault
     description: HashiCorp Vault CLI
-    category: cloud
+    category: tools
     phase: 8
     run_as: root
     optional: true
@@ -376,7 +376,7 @@ modules:
 
   - id: db.postgres18
     description: PostgreSQL 18
-    category: cloud
+    category: db
     phase: 8
     run_as: root
     optional: true
