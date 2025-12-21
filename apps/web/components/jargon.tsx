@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence, springs } from "@/components/motion";
 import { X, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,9 @@ export function Jargon({ term, children, className }: JargonProps) {
   const prefersReducedMotion = useReducedMotion();
 
   const jargonData = getJargon(term);
+
+  // Check if we can use portals (client-side only)
+  const canUsePortal = typeof document !== "undefined";
 
   useEffect(() => {
     return () => {
@@ -201,85 +205,91 @@ export function Jargon({ term, children, className }: JargonProps) {
         {displayText}
       </button>
 
-      {/* Desktop Tooltip */}
-      <AnimatePresence>
-        {isOpen && !isMobile && (
-          <motion.div
-            ref={tooltipRef}
-            initial={
-              prefersReducedMotion
-                ? { opacity: 0 }
-                : { opacity: 0, y: tooltipLayout.position === "top" ? 8 : -8, scale: 0.95 }
-            }
-            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-            exit={
-              prefersReducedMotion
-                ? { opacity: 0 }
-                : { opacity: 0, y: tooltipLayout.position === "top" ? 8 : -8, scale: 0.95 }
-            }
-            transition={prefersReducedMotion ? { duration: 0.12 } : springs.snappy}
-            className={cn(
-              "fixed z-[100] w-80 max-w-[calc(100vw-2rem)]",
-              "rounded-xl border border-border/50 bg-card/95 p-4 shadow-2xl backdrop-blur-xl",
-              // Gradient accent line at top
-              "before:absolute before:inset-x-0 before:h-1 before:rounded-t-xl before:bg-gradient-to-r before:from-primary/50 before:via-[oklch(0.7_0.2_330/0.5)] before:to-primary/50",
-              tooltipLayout.position === "top" ? "before:top-0" : "before:bottom-0 before:rounded-t-none before:rounded-b-xl"
-            )}
-            style={tooltipLayout.style}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <TooltipContent term={jargonData} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Mobile Bottom Sheet */}
-      <AnimatePresence>
-        {isOpen && isMobile && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={prefersReducedMotion ? { duration: 0.12 } : { duration: 0.2 }}
-              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-              onClick={handleClose}
-              aria-hidden="true"
-            />
-
-            {/* Sheet */}
+      {/* Desktop Tooltip - rendered via portal to escape stacking contexts */}
+      {canUsePortal && createPortal(
+        <AnimatePresence>
+          {isOpen && !isMobile && (
             <motion.div
               ref={tooltipRef}
-              initial={prefersReducedMotion ? { opacity: 0 } : { y: "100%" }}
-              animate={prefersReducedMotion ? { opacity: 1 } : { y: 0 }}
-              exit={prefersReducedMotion ? { opacity: 0 } : { y: "100%" }}
-              transition={prefersReducedMotion ? { duration: 0.12 } : springs.smooth}
-              className="fixed inset-x-0 bottom-0 z-[101] max-h-[80vh] overflow-hidden rounded-t-3xl border-t border-border/50 bg-card/98 shadow-2xl backdrop-blur-xl"
+              initial={
+                prefersReducedMotion
+                  ? { opacity: 0 }
+                  : { opacity: 0, y: tooltipLayout.position === "top" ? 8 : -8, scale: 0.95 }
+              }
+              animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+              exit={
+                prefersReducedMotion
+                  ? { opacity: 0 }
+                  : { opacity: 0, y: tooltipLayout.position === "top" ? 8 : -8, scale: 0.95 }
+              }
+              transition={prefersReducedMotion ? { duration: 0.12 } : springs.snappy}
+              className={cn(
+                "fixed z-[9999] w-80 max-w-[calc(100vw-2rem)]",
+                "rounded-xl border border-border/50 bg-card/95 p-4 shadow-2xl backdrop-blur-xl",
+                // Gradient accent line at top
+                "before:absolute before:inset-x-0 before:h-1 before:rounded-t-xl before:bg-gradient-to-r before:from-primary/50 before:via-[oklch(0.7_0.2_330/0.5)] before:to-primary/50",
+                tooltipLayout.position === "top" ? "before:top-0" : "before:bottom-0 before:rounded-t-none before:rounded-b-xl"
+              )}
+              style={tooltipLayout.style}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
             >
-              {/* Handle */}
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
-              </div>
-
-              {/* Close button */}
-              <button
-                onClick={handleClose}
-                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-
-              {/* Content */}
-              <div className="overflow-y-auto px-6 pb-safe pt-2 pb-8">
-                <SheetContent term={jargonData} />
-              </div>
+              <TooltipContent term={jargonData} />
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Mobile Bottom Sheet - rendered via portal to escape stacking contexts */}
+      {canUsePortal && createPortal(
+        <AnimatePresence>
+          {isOpen && isMobile && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={prefersReducedMotion ? { duration: 0.12 } : { duration: 0.2 }}
+                className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm"
+                onClick={handleClose}
+                aria-hidden="true"
+              />
+
+              {/* Sheet */}
+              <motion.div
+                ref={tooltipRef}
+                initial={prefersReducedMotion ? { opacity: 0 } : { y: "100%" }}
+                animate={prefersReducedMotion ? { opacity: 1 } : { y: 0 }}
+                exit={prefersReducedMotion ? { opacity: 0 } : { y: "100%" }}
+                transition={prefersReducedMotion ? { duration: 0.12 } : springs.smooth}
+                className="fixed inset-x-0 bottom-0 z-[9999] max-h-[80vh] overflow-hidden rounded-t-3xl border-t border-border/50 bg-card/98 shadow-2xl backdrop-blur-xl"
+              >
+                {/* Handle */}
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+                </div>
+
+                {/* Close button */}
+                <button
+                  onClick={handleClose}
+                  className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+
+                {/* Content */}
+                <div className="overflow-y-auto px-6 pb-safe pt-2 pb-8">
+                  <SheetContent term={jargonData} />
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }
@@ -333,7 +343,7 @@ function SheetContent({ term }: { term: JargonTerm }) {
         <div>
           <h3 className="text-xl font-bold text-foreground">{term.term}</h3>
           <p className="text-sm text-muted-foreground">
-            {term.short.split("—")[0].trim()}
+            {term.short.split(",")[0].trim()}
           </p>
         </div>
       </div>

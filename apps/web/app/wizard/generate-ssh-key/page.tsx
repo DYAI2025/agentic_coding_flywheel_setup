@@ -81,7 +81,7 @@ export default function GenerateSSHKeyPage() {
       <AlertCard variant="info" title="How SSH keys work">
         You&apos;re creating a <strong className="text-foreground">key pair</strong>: a <Jargon term="private-key">private key</Jargon> (stays on
         your computer) and a <Jargon term="public-key">public key</Jargon> (you&apos;ll paste into your <Jargon term="vps">VPS</Jargon>{" "}
-        provider). Think of it like a lock and key — you share the lock, but
+        provider). Think of it like a lock and key: you share the lock, but
         only you have the key.
       </AlertCard>
 
@@ -165,11 +165,11 @@ export default function GenerateSSHKeyPage() {
             Unlike regular passwords that you type, SSH keys are files stored on
             your computer. There are always <strong>two files</strong>:
             <br /><br />
-            <strong>1. Private key</strong> — This is your secret key. It stays on YOUR
+            <strong>1. Private key:</strong> This is your secret key. It stays on YOUR
             computer and you never share it with anyone. It&apos;s like the key to
             your house.
             <br /><br />
-            <strong>2. Public key</strong> — This is the one you share. You&apos;ll give
+            <strong>2. Public key:</strong> This is the one you share. You&apos;ll give
             this to your VPS provider. It&apos;s like giving someone a copy of your
             lock so they know it&apos;s really you when you connect.
           </GuideExplain>
@@ -273,15 +273,15 @@ export default function GenerateSSHKeyPage() {
 
           <GuideSection title="What if something went wrong?">
             <p>
-              <strong>&quot;Command not found&quot;</strong> — Make sure you&apos;re in the terminal,
+              <strong>&quot;Command not found&quot;:</strong> Make sure you&apos;re in the terminal,
               not in a web browser or text editor.
               <br /><br />
-              <strong>&quot;Permission denied&quot;</strong> — Try this command first, then run the
+              <strong>&quot;Permission denied&quot;:</strong> Try this command first, then run the
               ssh-keygen command again:
               <code className="my-2 block rounded bg-muted px-3 py-2 font-mono text-xs">
                 mkdir -p ~/.ssh && chmod 700 ~/.ssh
               </code>
-              <strong>&quot;File already exists&quot;</strong> — You already have a key! You can
+              <strong>&quot;File already exists&quot;:</strong> You already have a key! You can
               use your existing key, or type &quot;y&quot; and press Enter to overwrite it.
             </p>
           </GuideSection>

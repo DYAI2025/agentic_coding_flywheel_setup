@@ -221,19 +221,19 @@ export default function LaunchOnboardingPage() {
             environment! Your VPS now has:
             <ul className="mt-3 space-y-2">
               <li>
-                <strong>A powerful shell (zsh)</strong> — A modern command-line interface
+                <strong>A powerful shell (zsh):</strong> A modern command-line interface
                 with auto-suggestions and beautiful colors
               </li>
               <li>
-                <strong>AI coding assistants</strong> — Claude Code, Codex, and Gemini CLI
+                <strong>AI coding assistants:</strong> Claude Code, Codex, and Gemini CLI
                 are ready to help you write code
               </li>
               <li>
-                <strong>Development tools</strong> — Fast search (ripgrep), git interface
+                <strong>Development tools:</strong> Fast search (ripgrep), git interface
                 (lazygit), and more
               </li>
               <li>
-                <strong>Programming languages</strong> — JavaScript/TypeScript (bun),
+                <strong>Programming languages:</strong> JavaScript/TypeScript (bun),
                 Python (uv), Rust, and Go
               </li>
             </ul>

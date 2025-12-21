@@ -570,7 +570,7 @@ export default function WorkflowPage() {
               The Complete Development Lifecycle
             </h2>
             <p className="text-muted-foreground mb-5">
-              This isn&apos;t just about generating code — it&apos;s a full lifecycle process encompassing
+              A full development lifecycle encompassing
               ideation, planning, task breakdown, implementation, review, testing, deployment, and
               ongoing maintenance. The workflows are highly iterative, with agents communicating via
               an &quot;email-like&quot; system, managing tasks through a dependency-aware graph, and forming
@@ -613,7 +613,7 @@ export default function WorkflowPage() {
               <Clock className="h-5 w-5 text-[oklch(0.78_0.16_75)] shrink-0 mt-0.5" />
               <span>
                 <strong>Investment:</strong> VPS ($35-60/mo) + Claude Max ($200/mo × 1-5) + GPT Pro ($200/mo × 1-5) +
-                Gemini Ultra ($250/mo). Scale your swarm as you see ROI — start with 1 subscription of each and grow!
+                Gemini Ultra ($250/mo). Scale your swarm as you see ROI; start with 1 subscription of each and grow!
               </span>
             </p>
           </Card>

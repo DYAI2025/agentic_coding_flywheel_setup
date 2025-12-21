@@ -272,7 +272,7 @@ export default function SSHConnectPage() {
         <div className="space-y-6">
           <GuideExplain term="SSH (Secure Shell)">
             SSH is a way to securely connect to another computer over the internet.
-            It&apos;s like making a phone call to your VPS — once connected, everything
+            It&apos;s like making a phone call to your VPS. Once connected, everything
             you type appears on the VPS, not your local computer.
             <br /><br />
             When you &quot;SSH into&quot; a computer, you&apos;re essentially remote-controlling it
@@ -329,19 +329,19 @@ export default function SSHConnectPage() {
             <ul className="space-y-2">
               <li>
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ubuntu@</code>
-                — This is your username on the VPS
+                is your username on the VPS
               </li>
               <li>
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">vps</code>
-                — This is the VPS hostname (might be different)
+                is the VPS hostname (might be different)
               </li>
               <li>
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~</code>
-                — This means you&apos;re in your &quot;home&quot; folder
+                means you&apos;re in your &quot;home&quot; folder
               </li>
               <li>
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">$</code>
-                — This means the terminal is ready for your next command
+                means the terminal is ready for your next command
               </li>
             </ul>
           </GuideSection>

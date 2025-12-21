@@ -56,7 +56,7 @@ function MacContent() {
     <div className="space-y-6">
       <div className="space-y-4">
         <p className="text-muted-foreground">
-          Install <strong className="text-foreground">Ghostty</strong> or <strong className="text-foreground">WezTerm</strong> — either
+          Install <strong className="text-foreground">Ghostty</strong> or <strong className="text-foreground">WezTerm</strong>. Either
           is a great choice. Open it once after installing to make sure it works.
         </p>
 
@@ -94,10 +94,10 @@ function MacContent() {
             and run programs on it.
           </GuideExplain>
 
-          <GuideSection title="Quick Download — Click to Start">
+          <GuideSection title="Quick Download (Click to Start)">
             <p className="mb-4">
               Click one of these buttons to immediately download the installer.
-              We recommend <strong>Ghostty</strong> — it&apos;s fast and simple.
+              We recommend <strong>Ghostty</strong>; it&apos;s fast and simple.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <DirectDownloadButton
@@ -162,7 +162,7 @@ function MacContent() {
           <GuideTip>
             You&apos;ll know it worked when you see a window with a blinking cursor
             and some text (usually your username and a $ symbol). That&apos;s your terminal!
-            You can close it for now — we&apos;ll use it in the next steps.
+            You can close it for now; we&apos;ll use it in the next steps.
           </GuideTip>
 
           <GuideCaution>
@@ -281,7 +281,7 @@ function WindowsContent() {
                 <code className="mt-2 block rounded bg-muted px-3 py-2 font-mono text-sm">
                   OpenSSH_for_Windows_8.6p1, LibreSSL 3.4.3
                 </code>
-                The exact numbers don&apos;t matter — as long as you see &quot;OpenSSH&quot;,
+                The exact numbers don&apos;t matter; as long as you see &quot;OpenSSH&quot;,
                 you&apos;re good!
               </GuideStep>
             </div>

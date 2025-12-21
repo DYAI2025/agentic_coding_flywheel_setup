@@ -38,7 +38,18 @@ const TERMINAL_LINES = [
 function AnimatedTerminal() {
   const [visibleLines, setVisibleLines] = useState(0);
   const [cursorVisible, setCursorVisible] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+
+  // Detect mobile to simplify animations
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -60,10 +71,13 @@ function AnimatedTerminal() {
     return () => clearInterval(cursorInterval);
   }, []);
 
+  // On mobile or reduced motion, skip animations entirely
+  const skipAnimations = prefersReducedMotion || isMobile;
+
   return (
     <motion.div
       className="terminal-window shadow-2xl"
-      initial={prefersReducedMotion ? {} : { opacity: 0, scale: 0.95, y: 20 }}
+      initial={skipAnimations ? {} : { opacity: 0, scale: 0.95, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={springs.smooth}
     >
@@ -75,16 +89,13 @@ function AnimatedTerminal() {
           ubuntu@vps ~
         </span>
       </div>
-      <div className="terminal-content min-h-[280px]">
-        <AnimatePresence mode="sync">
-          {TERMINAL_LINES.slice(0, visibleLines).map((line, i) => (
-            <motion.div
-              key={`${line.text}-${i}`}
-              className="terminal-line mb-2"
-              initial={prefersReducedMotion ? {} : { opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ ...springs.snappy, delay: i * 0.05 }}
-            >
+      {/* Fixed height container to prevent layout shifts */}
+      <div className="terminal-content h-[280px] overflow-hidden">
+        {/* Use simple rendering on mobile to prevent jank */}
+        {skipAnimations ? (
+          // Static render without AnimatePresence on mobile
+          TERMINAL_LINES.slice(0, visibleLines).map((line, i) => (
+            <div key={`${line.text}-${i}`} className="terminal-line mb-2">
               {line.type === "command" && (
                 <>
                   <span className="terminal-prompt">$</span>
@@ -97,17 +108,47 @@ function AnimatedTerminal() {
               {line.type === "success" && (
                 <span className="text-[oklch(0.72_0.19_145)]">{line.text}</span>
               )}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            </div>
+          ))
+        ) : (
+          // Animated render on desktop
+          <AnimatePresence mode="sync">
+            {TERMINAL_LINES.slice(0, visibleLines).map((line, i) => (
+              <motion.div
+                key={`${line.text}-${i}`}
+                className="terminal-line mb-2"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ ...springs.snappy, delay: i * 0.05 }}
+              >
+                {line.type === "command" && (
+                  <>
+                    <span className="terminal-prompt">$</span>
+                    <span className="terminal-command">{line.text}</span>
+                  </>
+                )}
+                {line.type === "output" && (
+                  <span className="terminal-output">{line.text}</span>
+                )}
+                {line.type === "success" && (
+                  <span className="text-[oklch(0.72_0.19_145)]">{line.text}</span>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
         {visibleLines <= TERMINAL_LINES.length && (
           <div className="terminal-line">
             <span className="terminal-prompt">$</span>
-            <motion.span
-              className="terminal-cursor"
-              animate={{ opacity: cursorVisible ? 1 : 0 }}
-              transition={{ duration: 0.1 }}
-            />
+            {skipAnimations ? (
+              <span className="terminal-cursor" style={{ opacity: cursorVisible ? 1 : 0 }} />
+            ) : (
+              <motion.span
+                className="terminal-cursor"
+                animate={{ opacity: cursorVisible ? 1 : 0 }}
+                transition={{ duration: 0.1 }}
+              />
+            )}
           </div>
         )}
       </div>
@@ -562,14 +603,13 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-hero" />
       <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-30" />
 
-      {/* Floating orbs - GPU accelerated with will-change to prevent mobile jank */}
+      {/* Floating orbs - hidden on mobile to prevent performance issues */}
       <div
-        className="pointer-events-none absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-[oklch(0.75_0.18_195/0.1)] blur-[100px] animate-pulse-glow"
-        style={{ willChange: "transform, opacity" }}
+        className="pointer-events-none absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-[oklch(0.75_0.18_195/0.1)] blur-[100px] hidden sm:block sm:animate-pulse-glow"
       />
       <div
-        className="pointer-events-none absolute right-1/4 bottom-1/4 h-80 w-80 rounded-full bg-[oklch(0.7_0.2_330/0.08)] blur-[80px] animate-pulse-glow"
-        style={{ animationDelay: "1s", willChange: "transform, opacity" }}
+        className="pointer-events-none absolute right-1/4 bottom-1/4 h-80 w-80 rounded-full bg-[oklch(0.7_0.2_330/0.08)] blur-[80px] hidden sm:block sm:animate-pulse-glow"
+        style={{ animationDelay: "1s" }}
       />
 
       {/* Navigation */}

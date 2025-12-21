@@ -625,7 +625,7 @@ export const flywheelDescription = {
   title: "The Agentic Coding Flywheel",
   subtitle: "Eight tools that create unheard-of velocity",
   description:
-    "This isn't just a toolkit—it's a self-reinforcing system that enables multiple AI agents to work in parallel across 7+ projects, reviewing each other's work, creating and executing tasks, and making incredible autonomous progress while you're away.",
+    "A self-reinforcing system that enables multiple AI agents to work in parallel across 7+ projects, reviewing each other's work, creating and executing tasks, and making incredible autonomous progress while you're away.",
   philosophy: [
     {
       title: "Unix Philosophy",
@@ -657,7 +657,7 @@ export const flywheelDescription = {
     agentsParallel: "6+",
   },
   keyInsight:
-    "The magic isn't in any single tool. It's in how they work together. Agents figuring out what to work on using BV, coordinating via Mail, searching past sessions with CASS, learning from CM, protected by SLB—all orchestrated by NTM.",
+    "The power comes from how these tools work together. Agents figure out what to work on using BV, coordinate via Mail, search past sessions with CASS, learn from CM, and stay protected by SLB. NTM orchestrates everything.",
 };
 
 // ============================================================

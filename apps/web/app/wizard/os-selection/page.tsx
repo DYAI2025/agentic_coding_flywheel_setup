@@ -215,7 +215,7 @@ export default function OSSelectionPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>
                 <strong>Mac:</strong> Look at the top-left corner of your screen. Do you
-                see an Apple icon ()? Click it and select &quot;About This Mac&quot; —
+                see an Apple icon ()? Click it and select &quot;About This Mac&quot; and
                 it will say something like &quot;macOS Sonoma&quot; or &quot;macOS Ventura&quot;.
               </li>
               <li>
@@ -228,7 +228,7 @@ export default function OSSelectionPage() {
 
           <GuideTip>
             We already tried to detect your computer type automatically! Look at the card
-            above that says &quot;Detected&quot; — that&apos;s probably correct. Just click
+            above that says &quot;Detected&quot;; that&apos;s probably correct. Just click
             on it to confirm, then click &quot;Continue&quot;.
           </GuideTip>
         </div>

@@ -169,7 +169,7 @@ export default function RunInstallerPage() {
           <GuideExplain term="What is this command doing?">
             This command downloads and runs a setup script that automatically installs
             everything you need on your VPS. Think of it like running an installer
-            on your computer — but this one installs dozens of tools at once!
+            on your computer, but this one installs dozens of tools at once!
             <br /><br />
             The script is <Jargon term="idempotent">&quot;idempotent&quot;</Jargon> which means it&apos;s safe to run multiple times.
             If something fails, you can just run it again.
@@ -187,14 +187,14 @@ export default function RunInstallerPage() {
 
               <GuideStep number={2} title="Copy the install command">
                 Click the copy button on the purple command box above. The command
-                is quite long — make sure you copy the whole thing!
+                is quite long, so make sure you copy the whole thing!
               </GuideStep>
 
               <GuideStep number={3} title="Paste and run">
                 In your SSH terminal (where you&apos;re connected to the VPS), paste
                 the command and press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd>.
                 <br /><br />
-                You&apos;ll see lots of text scrolling by — this is normal!
+                You&apos;ll see lots of text scrolling by. This is normal!
               </GuideStep>
 
               <GuideStep number={4} title="Wait patiently (10-15 minutes)">
@@ -218,18 +218,18 @@ export default function RunInstallerPage() {
             </p>
             <ul className="space-y-2">
               <li>
-                <strong>Modern shell (zsh)</strong> — A better terminal experience with
+                <strong>Modern shell (zsh):</strong> A better terminal experience with
                 colors and suggestions
               </li>
               <li>
-                <strong>Programming languages</strong> — JavaScript/TypeScript, Python,
+                <strong>Programming languages:</strong> JavaScript/TypeScript, Python,
                 Rust, and Go
               </li>
               <li>
-                <strong>AI coding assistants</strong> — Claude Code, Codex, and Gemini CLI
+                <strong>AI coding assistants:</strong> Claude Code, Codex, and Gemini CLI
               </li>
               <li>
-                <strong>Developer tools</strong> — Git interface, file searchers, and more
+                <strong>Developer tools:</strong> Git interface, file searchers, and more
               </li>
             </ul>
           </GuideSection>
@@ -242,7 +242,7 @@ export default function RunInstallerPage() {
           <GuideCaution>
             <strong>Don&apos;t close the terminal window</strong> while the installation
             is running. If you accidentally close it, SSH back in and run the
-            command again — it will resume from where it stopped.
+            command again. It will resume from where it stopped.
           </GuideCaution>
         </div>
       </SimplerGuide>

@@ -84,7 +84,7 @@ const PROVIDER_GUIDES = [
       'Click "Configure" and select your preferred region (US or EU)',
       'Under "Image", select Ubuntu 24.04 or 25.x',
       'In the order form, paste your SSH public key when prompted',
-      "Complete checkout — servers activate within minutes",
+      "Complete checkout (servers activate within minutes)",
       'Go to "Your services" > "VPS control" to find your IP address',
     ],
   },
@@ -94,7 +94,7 @@ const PROVIDER_GUIDES = [
       'Click "Order" on VPS Comfort (16GB) or VPS Elite (32GB)',
       'Under "Image", select Ubuntu 25.04 (or latest)',
       'Under "SSH Key", click "Add a key" and paste your public key',
-      "Complete the order — activation is usually instant",
+      "Complete the order (activation is usually instant)",
       "Copy the IP address from your control panel",
     ],
   },
@@ -283,7 +283,7 @@ export default function CreateVPSPage() {
                   <strong>Look for:</strong> Ubuntu 25.04 or Ubuntu 24.04 LTS
                   <br />
                   <em className="text-xs">
-                    LTS stands for &quot;Long Term Support&quot; — it means the version
+                    LTS stands for &quot;Long Term Support&quot;, meaning the version
                     is stable and well-supported.
                   </em>
                 </GuideStep>
@@ -324,7 +324,7 @@ export default function CreateVPSPage() {
                     <li>It looks like: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">123.45.67.89</code></li>
                   </ul>
                   <br />
-                  <strong>Copy this number</strong> — you&apos;ll paste it in the box below!
+                  <strong>Copy this number</strong> and paste it in the box below!
                 </GuideStep>
               </div>
             </GuideSection>

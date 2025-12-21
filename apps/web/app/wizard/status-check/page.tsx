@@ -180,7 +180,7 @@ export default function StatusCheckPage() {
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">cc --version</code>
                 <br />
                 <span className="text-sm text-muted-foreground">
-                  This checks Claude Code — the AI coding assistant. You should see
+                  This checks Claude Code, the AI coding assistant. You should see
                   a version number like &quot;1.0.3&quot;.
                 </span>
               </li>
@@ -188,7 +188,7 @@ export default function StatusCheckPage() {
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">bun --version</code>
                 <br />
                 <span className="text-sm text-muted-foreground">
-                  This checks Bun — a fast JavaScript runtime. You should see
+                  This checks Bun, a fast JavaScript runtime. You should see
                   something like &quot;1.1.38&quot;.
                 </span>
               </li>
@@ -244,7 +244,7 @@ export default function StatusCheckPage() {
 
           <GuideTip>
             If most things show green checkmarks (✔), you&apos;re good to go! Don&apos;t worry
-            about one or two yellow warnings — those are usually optional tools.
+            about one or two yellow warnings; those are usually optional tools.
             Click &quot;Everything looks good!&quot; to continue.
           </GuideTip>
 

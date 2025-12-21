@@ -100,8 +100,8 @@ function HeroSection() {
           style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}
         >
           Eight interconnected tools that enable multiple AI agents to work in parallel,
-          review each other&apos;s work, and make incredible autonomous progress—
-          <span className="text-foreground font-medium">while you&apos;re away</span>.
+          review each other&apos;s work, and make incredible autonomous progress,
+          all <span className="text-foreground font-medium">while you&apos;re away</span>.
         </p>
 
         {/* Key insight quote */}

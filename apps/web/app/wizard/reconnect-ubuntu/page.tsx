@@ -149,13 +149,13 @@ export default function ReconnectUbuntuPage() {
       <SimplerGuide>
         <div className="space-y-6">
           <GuideExplain term="Why reconnect as ubuntu?">
-            During installation, you may have connected as &quot;root&quot; — the super-admin
+            During installation, you may have connected as &quot;root&quot;, the super-admin
             account. Now we want you to use the &quot;ubuntu&quot; account instead because:
             <br /><br />
-            <strong>1. Safety</strong> — The root account can accidentally break things.
+            <strong>1. Safety:</strong> The root account can accidentally break things.
             The ubuntu account is safer for everyday use.
             <br /><br />
-            <strong>2. Better experience</strong> — The installer set up special features
+            <strong>2. Better experience:</strong> The installer set up special features
             (like the colorful prompt) for the ubuntu user.
           </GuideExplain>
 
@@ -164,11 +164,11 @@ export default function ReconnectUbuntuPage() {
             <ul className="mt-2 space-y-2">
               <li>
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">root@vps:~#</code>
-                — You&apos;re logged in as root (note the <strong>#</strong> symbol)
+                means you&apos;re logged in as root (note the <strong>#</strong> symbol)
               </li>
               <li>
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ubuntu@vps:~$</code>
-                — You&apos;re logged in as ubuntu (note the <strong>$</strong> symbol)
+                means you&apos;re logged in as ubuntu (note the <strong>$</strong> symbol)
               </li>
             </ul>
           </GuideSection>
@@ -195,7 +195,7 @@ export default function ReconnectUbuntuPage() {
 
           <GuideTip>
             If you were already connected as ubuntu (skip button above applies to you),
-            just click &quot;Skip&quot; or &quot;Continue&quot; — you don&apos;t need to do anything!
+            just click &quot;Skip&quot; or &quot;Continue&quot;; you don&apos;t need to do anything!
           </GuideTip>
         </div>
       </SimplerGuide>
