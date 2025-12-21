@@ -1,5 +1,5 @@
 import { chromium } from '@playwright/test';
-import { writeFileSync, mkdirSync } from 'fs';
+import { mkdirSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -40,8 +40,7 @@ async function researchContabo() {
     // Parse for Cloud VPS plans
     const lines = pageText.split('\n').filter(line => line.trim());
 
-    let inPlanSection = false;
-    let planInfo = [];
+    const planInfo = [];
 
     for (const line of lines) {
       if (line.includes('Cloud VPS') || line.includes('vCPU') || line.includes('GB RAM') ||

@@ -247,7 +247,7 @@ async function researchOVH(page) {
 /**
  * Generate pricing comparison summary
  */
-function generateSummary(contaboResults, ovhResults) {
+function generateSummary() {
   const date = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -304,9 +304,9 @@ async function main() {
   const page = await context.newPage();
 
   try {
-    const contaboResults = await researchContabo(page);
-    const ovhResults = await researchOVH(page);
-    generateSummary(contaboResults, ovhResults);
+    await researchContabo(page);
+    await researchOVH(page);
+    generateSummary();
   } finally {
     await browser.close();
   }
