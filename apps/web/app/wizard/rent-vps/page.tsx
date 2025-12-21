@@ -425,8 +425,11 @@ export default function RentVPSPage() {
                 <ul className="mt-2 list-disc space-y-1 pl-5">
                   <li><strong>Region:</strong> Choose closest to you (US or EU)</li>
                   <li><strong>Storage:</strong> Keep the default NVMe option</li>
-                  <li><strong>Image:</strong> Select &quot;Ubuntu 24.04&quot; or newer</li>
+                  <li><strong>Image:</strong> Select &quot;Ubuntu 25.10&quot; or newest available</li>
                 </ul>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  If 25.10 isn&apos;t offered, Ubuntu 24.04 LTS is fine — ACFS upgrades to 25.10 automatically.
+                </p>
               </GuideStep>
 
               <GuideStep number={4} title="Create an account">

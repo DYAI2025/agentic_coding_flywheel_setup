@@ -22,7 +22,7 @@ import {
 import { Jargon } from "@/components/jargon";
 
 const CHECKLIST_ITEMS = [
-  { id: "ubuntu", label: "Selected Ubuntu 25.x (or newest Ubuntu available)" },
+  { id: "ubuntu", label: "Selected Ubuntu 25.10 (or newest Ubuntu available)" },
   { id: "ssh", label: "Pasted my SSH public key" },
   { id: "created", label: "Created the VPS and waited for it to start" },
   { id: "copied-ip", label: "Copied the IP address" },
@@ -83,7 +83,7 @@ const PROVIDER_GUIDES = [
     steps: [
       "Go to contabo.com/en/vps and pick a plan with at least 16GB RAM (32GB ideal)",
       'Click "Configure" and select your preferred region (US or EU)',
-      'Under "Image", select Ubuntu 24.04 or 25.x',
+      'Under "Image", select Ubuntu 25.10 (or newest available)',
       "Complete checkout (servers activate within minutes)",
       'Go to "Your services" > "VPS control" to find your IP address',
       'Click "Manage" on your VPS, then "SSH keys" to add your public key',
@@ -93,7 +93,7 @@ const PROVIDER_GUIDES = [
     name: "OVH",
     steps: [
       'Click "Order" on VPS Comfort (16GB) or VPS Elite (32GB)',
-      'Under "Image", select Ubuntu 25.04 (or latest)',
+      'Under "Image", select Ubuntu 25.10 (or latest)',
       'Under "SSH Key", click "Add a key" and paste your public key',
       "Complete the order (activation is usually instant)",
       "Copy the IP address from your control panel",
@@ -281,11 +281,11 @@ export default function CreateVPSPage() {
                 <GuideStep number={4} title="Select Ubuntu as the operating system">
                   You&apos;ll see a list of &quot;images&quot; or &quot;operating systems&quot;.
                   <br /><br />
-                  <strong>Look for:</strong> Ubuntu 25.04 or Ubuntu 24.04 LTS
+                  <strong>Look for:</strong> Ubuntu 25.10 (or newest available)
                   <br />
                   <em className="text-xs">
-                    LTS stands for &quot;Long Term Support&quot;, meaning the version
-                    is stable and well-supported.
+                    If only Ubuntu 24.04 LTS is offered, that&apos;s fine. The installer
+                    automatically upgrades to 25.10 before ACFS installs.
                   </em>
                 </GuideStep>
 

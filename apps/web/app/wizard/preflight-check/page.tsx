@@ -130,7 +130,7 @@ export default function PreflightCheckPage() {
         <div className="space-y-1 font-mono text-xs">
           <p className="text-muted-foreground">ACFS Pre-Flight Check</p>
           <p className="text-muted-foreground">=====================</p>
-          <p className="text-[oklch(0.72_0.19_145)]">[✓] Operating System: Ubuntu 24.04</p>
+          <p className="text-[oklch(0.72_0.19_145)]">[✓] Operating System: Ubuntu 25.10 (or 24.04 before upgrade)</p>
           <p className="text-[oklch(0.72_0.19_145)]">[✓] Architecture: x86_64</p>
           <p className="text-[oklch(0.72_0.19_145)]">[✓] Disk Space: 45GB free</p>
           <p className="text-[oklch(0.78_0.16_75)]">[!] Warning: Cannot reach https://claude.ai</p>
