@@ -31,11 +31,15 @@ curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_f
 
 The installer is **idempotent**—if interrupted, simply re-run it. It will automatically resume from the last completed phase without prompts.
 
-> **Production environments:** For stable, reproducible installs, pin to a specific commit:
+> **Production environments:** For stable, reproducible installs, pin to a tagged release or specific commit:
 > ```bash
-> curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/<commit-sha>/install.sh" | bash -s -- --yes --mode vibe
+> # Preferred: use a tagged release (e.g., v0.1.0)
+> ACFS_REF=v0.1.0 curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/v0.1.0/install.sh" | bash -s -- --yes --mode vibe
+>
+> # Alternative: pin to a specific commit SHA
+> ACFS_REF=abc1234 curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/abc1234/install.sh" | bash -s -- --yes --mode vibe
 > ```
-> This ensures all scripts are fetched from the same snapshot, avoiding drift during long-running installs.
+> Tagged releases are tested and stable. Setting `ACFS_REF` ensures all fetched scripts use the same version.
 
 ---
 
@@ -2476,15 +2480,24 @@ ACFS supports various configuration mechanisms for advanced users.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ACFS_HOME` | `~/.acfs` | Configuration directory |
-| `ACFS_REF` | `main` | Git ref to install from |
+| `ACFS_REF` | `main` | Git ref to install from (tag, branch, or commit SHA) |
 | `ACFS_LOG_DIR` | `/var/log/acfs` | Log directory |
 | `TARGET_USER` | `ubuntu` | User to configure |
 | `TARGET_HOME` | `/home/$TARGET_USER` | User home directory |
 
-**Example: Install from a specific branch**:
+**Examples:**
 ```bash
+# Install from a tagged release (recommended for production)
+ACFS_REF=v0.1.0 curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/v0.1.0/install.sh" | bash -s -- --yes --mode vibe
+
+# Install from a specific branch (development/testing)
 ACFS_REF=feature/new-tool curl -fsSL "..." | bash -s -- --yes --mode vibe
+
+# Install from a specific commit (reproducibility)
+ACFS_REF=abc1234 curl -fsSL "..." | bash -s -- --yes --mode vibe
 ```
+
+> **Tip:** Always match the URL path with `ACFS_REF` so the initial script and all subsequently fetched scripts come from the same ref.
 
 ### Skip Flags
 
