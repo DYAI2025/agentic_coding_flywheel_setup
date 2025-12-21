@@ -28,6 +28,8 @@ fi
 # ============================================================
 
 TARGET_USER="${TARGET_USER:-${SUDO_USER:-$(whoami)}}"
+SERVICES_SETUP_ACTION="${SERVICES_SETUP_ACTION:-}"
+SERVICES_SETUP_NONINTERACTIVE="${SERVICES_SETUP_NONINTERACTIVE:-false}"
 
 resolve_home_dir() {
     local user="$1"
@@ -413,7 +415,8 @@ setup_claude_git_guard() {
     local guard_path="$hooks_dir/git_safety_guard.sh"
     local settings_file="$settings_dir/settings.json"
 
-    gum_box "Claude Git Safety Guard" "This installs a Claude Code PreToolUse hook that blocks destructive git/filesystem commands before they run.
+    if [[ "$SERVICES_SETUP_NONINTERACTIVE" != "true" ]] && ([[ -t 0 ]] || [[ -r /dev/tty ]]); then
+        gum_box "Claude Git Safety Guard" "This installs a Claude Code PreToolUse hook that blocks destructive git/filesystem commands before they run.
 
 It helps prevent accidental loss of uncommitted work from commands like:
   • git checkout -- <files>
@@ -428,7 +431,14 @@ Recommended if you run Claude in dangerous mode (ACFS vibe aliases).
 
 Press Enter to install the guard..."
 
-    read -r
+        if [[ -r /dev/tty ]]; then
+            read -r < /dev/tty || true
+        else
+            read -r || true
+        fi
+    else
+        gum_detail "Installing Claude Git Safety Guard (noninteractive)"
+    fi
 
     mkdir -p "$hooks_dir"
 
@@ -604,6 +614,53 @@ EOF
 
     gum_success "Installed Claude Git Safety Guard"
     gum_warn "Restart Claude Code for hooks to take effect"
+}
+
+print_cli_help() {
+    cat << 'EOF'
+ACFS services-setup
+
+Interactive:
+  acfs services-setup
+
+Noninteractive actions:
+  services-setup.sh --install-claude-guard --yes
+EOF
+}
+
+maybe_run_cli_action() {
+    local arg
+    local install_claude_guard="false"
+
+    while [[ $# -gt 0 ]]; do
+        arg="$1"
+        case "$arg" in
+            --install-claude-guard)
+                install_claude_guard="true"
+                ;;
+            --yes|-y)
+                SERVICES_SETUP_NONINTERACTIVE="true"
+                ;;
+            --help|-h)
+                SERVICES_SETUP_ACTION="help"
+                ;;
+            *)
+                ;;
+        esac
+        shift || true
+    done
+
+    if [[ "${SERVICES_SETUP_ACTION:-}" == "help" ]]; then
+        print_cli_help
+        return 0
+    fi
+
+    if [[ "$install_claude_guard" == "true" ]]; then
+        setup_claude_git_guard
+        return 0
+    fi
+
+    return 1
 }
 
 setup_gemini() {
@@ -1028,5 +1085,8 @@ Happy coding!"
 
 # Run main if not sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    if maybe_run_cli_action "$@"; then
+        exit 0
+    fi
     main "$@"
 fi
