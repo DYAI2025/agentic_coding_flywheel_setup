@@ -51,6 +51,34 @@ declare -A VERSION_BEFORE=()
 declare -A VERSION_AFTER=()
 
 # ============================================================
+# Path Setup
+# ============================================================
+
+ensure_path() {
+    local dir
+    local to_add=()
+
+    for dir in \
+        "$HOME/.local/bin" \
+        "$HOME/.bun/bin" \
+        "$HOME/.cargo/bin" \
+        "$HOME/go/bin" \
+        "$HOME/.atuin/bin"; do
+        [[ -d "$dir" ]] || continue
+        case ":$PATH:" in
+            *":$dir:"*) ;;
+            *) to_add+=("$dir") ;;
+        esac
+    done
+
+    if [[ ${#to_add[@]} -gt 0 ]]; then
+        local prefix
+        prefix=$(IFS=:; echo "${to_add[*]}")
+        export PATH="${prefix}:$PATH"
+    fi
+}
+
+# ============================================================
 # Logging Infrastructure
 # ============================================================
 
@@ -1121,6 +1149,9 @@ EOF
 }
 
 main() {
+    # Ensure PATH includes user tool directories
+    ensure_path
+
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
