@@ -168,7 +168,7 @@ install_lang_rust() {
                     log_error "Missing checksum entry for $tool"
                     false
                 else
-                    verify_checksum "$url" "$expected_sha256" "$tool" | sh -s -- -y
+                    verify_checksum "$url" "$expected_sha256" "$tool" | sh '-s' '--' '-y'
                 fi
             fi
         }; then

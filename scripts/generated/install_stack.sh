@@ -121,7 +121,7 @@ install_stack_mcp_agent_mail() {
                     log_error "Missing checksum entry for $tool"
                     false
                 else
-                    verify_checksum "$url" "$expected_sha256" "$tool" | bash --yes
+                    verify_checksum "$url" "$expected_sha256" "$tool" | bash '--yes'
                 fi
             fi
         }; then
@@ -177,7 +177,7 @@ install_stack_ultimate_bug_scanner() {
                     log_error "Missing checksum entry for $tool"
                     false
                 else
-                    verify_checksum "$url" "$expected_sha256" "$tool" | bash --easy-mode
+                    verify_checksum "$url" "$expected_sha256" "$tool" | bash '--easy-mode'
                 fi
             fi
         }; then
@@ -280,7 +280,7 @@ install_stack_cass() {
                     log_error "Missing checksum entry for $tool"
                     false
                 else
-                    verify_checksum "$url" "$expected_sha256" "$tool" | bash --easy-mode --verify
+                    verify_checksum "$url" "$expected_sha256" "$tool" | bash '--easy-mode' '--verify'
                 fi
             fi
         }; then
@@ -327,7 +327,7 @@ install_stack_cm() {
                     log_error "Missing checksum entry for $tool"
                     false
                 else
-                    verify_checksum "$url" "$expected_sha256" "$tool" | bash --easy-mode --verify
+                    verify_checksum "$url" "$expected_sha256" "$tool" | bash '--easy-mode' '--verify'
                 fi
             fi
         }; then
