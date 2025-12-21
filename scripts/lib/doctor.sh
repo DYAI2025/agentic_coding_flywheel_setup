@@ -459,7 +459,13 @@ check_stack() {
 # Only runs when --deep flag is provided.
 # ============================================================
 
-# Run all deep/functional checks
+# Deep check counters (separate from main counters for summary)
+DEEP_PASS_COUNT=0
+DEEP_WARN_COUNT=0
+DEEP_FAIL_COUNT=0
+
+# Run all deep/functional checks with formatted output
+# Enhanced per bead aqs: Adds counters and summary
 # Usage: run_deep_checks
 run_deep_checks() {
     section "Deep Checks (Functional Tests)"
@@ -473,6 +479,11 @@ run_deep_checks() {
         echo ""
     fi
 
+    # Capture counts before deep checks to calculate deep-only stats
+    local pre_pass=$PASS_COUNT
+    local pre_warn=$WARN_COUNT
+    local pre_fail=$FAIL_COUNT
+
     # Agent authentication checks
     deep_check_agent_auth
 
@@ -481,6 +492,34 @@ run_deep_checks() {
 
     # Cloud CLI checks
     deep_check_cloud
+
+    # Calculate deep check specific counts
+    DEEP_PASS_COUNT=$((PASS_COUNT - pre_pass))
+    DEEP_WARN_COUNT=$((WARN_COUNT - pre_warn))
+    DEEP_FAIL_COUNT=$((FAIL_COUNT - pre_fail))
+    local deep_total=$((DEEP_PASS_COUNT + DEEP_WARN_COUNT + DEEP_FAIL_COUNT))
+
+    # Print deep checks summary
+    if [[ "$JSON_MODE" != "true" ]]; then
+        echo ""
+        if [[ "$HAS_GUM" == "true" ]]; then
+            local summary_text=""
+            if [[ $DEEP_FAIL_COUNT -eq 0 ]]; then
+                summary_text="$(gum style --foreground "$ACFS_SUCCESS" --bold "$DEEP_PASS_COUNT/$deep_total") functional tests passed"
+                [[ $DEEP_WARN_COUNT -gt 0 ]] && summary_text="$summary_text $(gum style --foreground "$ACFS_WARNING" "($DEEP_WARN_COUNT warnings)")"
+            else
+                summary_text="$(gum style --foreground "$ACFS_ERROR" --bold "$DEEP_PASS_COUNT/$deep_total") functional tests passed"
+                summary_text="$summary_text $(gum style --foreground "$ACFS_ERROR" "($DEEP_FAIL_COUNT failed)")"
+            fi
+            echo "  $summary_text"
+        else
+            if [[ $DEEP_FAIL_COUNT -eq 0 ]]; then
+                echo -e "  ${GREEN}$DEEP_PASS_COUNT/$deep_total${NC} functional tests passed"
+            else
+                echo -e "  ${RED}$DEEP_PASS_COUNT/$deep_total${NC} functional tests passed (${RED}$DEEP_FAIL_COUNT failed${NC})"
+            fi
+        fi
+    fi
 
     blank_line
 }
@@ -867,6 +906,7 @@ $(gum style --foreground "$ACFS_MUTED" "Run the suggested fix commands, then 'ac
 }
 
 # Print JSON output
+# Enhanced per bead aqs: Includes deep check summary when --deep is used
 print_json() {
     local checks_json
     checks_json=$(printf '%s,' "${JSON_CHECKS[@]}" | sed 's/,$//')
@@ -880,15 +920,24 @@ print_json() {
         os_version="${VERSION_ID:-unknown}"
     fi
 
+    # Build deep summary JSON if deep mode was used
+    local deep_summary_json=""
+    if [[ "$DEEP_MODE" == "true" ]]; then
+        local deep_total=$((DEEP_PASS_COUNT + DEEP_WARN_COUNT + DEEP_FAIL_COUNT))
+        deep_summary_json=",
+  \"deep_summary\": {\"pass\": $DEEP_PASS_COUNT, \"warn\": $DEEP_WARN_COUNT, \"fail\": $DEEP_FAIL_COUNT, \"total\": $deep_total}"
+    fi
+
     cat << EOF
 {
   "acfs_version": "$(json_escape "$ACFS_VERSION")",
   "timestamp": "$(json_escape "$(date -Iseconds)")",
   "mode": "$(json_escape "${ACFS_MODE:-vibe}")",
+  "deep_mode": $DEEP_MODE,
   "user": "$(json_escape "$(whoami)")",
   "os": {"id": "$(json_escape "$os_id")", "version": "$(json_escape "$os_version")"},
   "checks": [$checks_json],
-  "summary": {"pass": $PASS_COUNT, "warn": $WARN_COUNT, "fail": $FAIL_COUNT}
+  "summary": {"pass": $PASS_COUNT, "warn": $WARN_COUNT, "fail": $FAIL_COUNT}$deep_summary_json
 }
 EOF
 }
