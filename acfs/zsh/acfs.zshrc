@@ -273,7 +273,7 @@ acfs() {
         return 1
       fi
       ;;
-    dashboard)
+    dashboard|dash)
       if [[ -f "$HOME/.acfs/scripts/lib/dashboard.sh" ]]; then
         bash "$HOME/.acfs/scripts/lib/dashboard.sh" "$@"
       else
@@ -296,7 +296,7 @@ acfs() {
       echo "Commands:"
       echo "  info            Quick system overview (hostname, IP, uptime, progress)"
       echo "  cheatsheet      Command reference (aliases, shortcuts)"
-      echo "  dashboard       Generate or serve a static HTML dashboard"
+      echo "  dashboard, dash <generate|serve> - Static HTML dashboard"
       echo "  continue        View installation progress (after Ubuntu upgrade)"
       echo "  services-setup  Configure AI agents and cloud services"
       echo "  doctor          Check system health and tool status"
