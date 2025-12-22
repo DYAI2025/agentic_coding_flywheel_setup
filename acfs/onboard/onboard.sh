@@ -337,7 +337,17 @@ NEXTSTEPS
 )"
 
         echo ""
-        gum confirm "Return to menu?" && return 0
+        local cert_choice
+        cert_choice=$(gum choose "Return to menu" "Exit onboarding")
+        case "$cert_choice" in
+            "Exit onboarding")
+                echo -e "${CYAN}See you next time!${NC}"
+                exit 0
+                ;;
+            *)
+                return 0
+                ;;
+        esac
     else
         echo -e "${YELLOW}╔═════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${YELLOW}║${NC}                                                             ${YELLOW}║${NC}"
