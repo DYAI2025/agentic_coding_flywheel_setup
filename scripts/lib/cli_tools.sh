@@ -34,6 +34,12 @@ APT_CLI_TOOLS=(
     netcat-openbsd  # nc for network debugging
     strace          # syscall tracing
     htop            # process viewer (fallback for btop)
+    tree            # directory tree viewer
+    ncdu            # interactive disk usage
+    httpie          # better curl for APIs
+    entr            # run commands when files change
+    mtr             # better traceroute
+    pv              # pipe viewer (progress bars)
 )
 
 # APT packages that may not be available on all Ubuntu versions
@@ -43,6 +49,7 @@ APT_CLI_TOOLS_OPTIONAL=(
     eza             # modern ls alternative
     btop            # better top
     dust            # better du
+    git-delta       # beautiful git diffs (provides 'delta' command)
 )
 
 # Cargo packages (for latest versions or missing apt packages)
@@ -50,6 +57,7 @@ APT_CLI_TOOLS_OPTIONAL=(
 CARGO_CLI_TOOLS=(
     zoxide          # better cd (z command)
     ast-grep        # structural grep (sg command)
+    tealdeer        # tldr - simplified man pages
 )
 
 # ============================================================
@@ -217,6 +225,14 @@ install_cargo_cli_tools() {
         _cli_run_as_user "$cargo_bin install du-dust --locked 2>/dev/null" || log_warn "Could not install dust"
     fi
 
+    # Install tealdeer (tldr - simplified man pages)
+    if ! _cli_command_exists tldr; then
+        log_detail "Installing tealdeer (tldr) via cargo..."
+        _cli_run_as_user "$cargo_bin install tealdeer --locked 2>/dev/null" || log_warn "Could not install tealdeer"
+        # Fetch tldr pages cache
+        _cli_run_as_user "tldr --update 2>/dev/null" || true
+    fi
+
     log_success "Cargo CLI tools installed"
 }
 
@@ -336,6 +352,47 @@ install_lazydocker() {
     rm -rf "$tmpdir"
 
     log_success "lazydocker installed from GitHub"
+}
+
+# Install yq (YAML processor, like jq for YAML)
+install_yq() {
+    local sudo_cmd
+    sudo_cmd=$(_cli_get_sudo)
+
+    if _cli_command_exists yq; then
+        log_detail "yq already installed"
+        return 0
+    fi
+
+    log_detail "Installing yq..."
+
+    # Install from GitHub releases (Mike Farah's yq)
+    local arch
+    arch=$(uname -m)
+    case "$arch" in
+        x86_64) arch="amd64" ;;
+        aarch64|arm64) arch="arm64" ;;
+        *) log_warn "Unsupported architecture for yq: $arch"; return 1 ;;
+    esac
+
+    local version
+    version=$(curl -s "https://api.github.com/repos/mikefarah/yq/releases/latest" | sed -n 's/.*"tag_name": "\([^"]*\)".*/\1/p' 2>/dev/null | head -1) || version="v4.44.1"
+    [[ -z "$version" ]] && version="v4.44.1"
+
+    local tmpdir
+    tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/acfs_yq.XXXXXX")
+    curl --proto '=https' --proto-redir '=https' -fsSL -o "$tmpdir/yq" \
+        "https://github.com/mikefarah/yq/releases/download/${version}/yq_linux_${arch}" || {
+        log_warn "Could not download yq"
+        rm -rf "$tmpdir"
+        return 1
+    }
+
+    chmod +x "$tmpdir/yq"
+    $sudo_cmd install "$tmpdir/yq" /usr/local/bin/yq
+    rm -rf "$tmpdir"
+
+    log_success "yq installed from GitHub"
 }
 
 # Install atuin (shell history)
