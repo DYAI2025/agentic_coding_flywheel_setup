@@ -6,6 +6,7 @@ import { ExternalLink, Terminal, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommandCard } from "@/components/command-card";
 import { AlertCard } from "@/components/alert-card";
+import { TrackedLink } from "@/components/tracked-link";
 import { cn } from "@/lib/utils";
 import { markStepComplete } from "@/lib/wizardSteps";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
@@ -29,11 +30,13 @@ interface TerminalCardProps {
 }
 
 function TerminalCard({ name, description, href }: TerminalCardProps) {
+  // Convert name to tracking ID (e.g., "Ghostty" -> "terminal-ghostty")
+  const trackingId = `terminal-${name.toLowerCase().replace(/\s+/g, "-")}`;
+
   return (
-    <a
+    <TrackedLink
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
+      trackingId={trackingId}
       className={cn(
         "group relative flex items-center justify-between rounded-xl border p-4 transition-all duration-200",
         "border-border/50 bg-card/50 hover:border-primary/30 hover:bg-card/80 hover:shadow-md"
@@ -44,7 +47,7 @@ function TerminalCard({ name, description, href }: TerminalCardProps) {
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-    </a>
+    </TrackedLink>
   );
 }
 

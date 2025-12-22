@@ -32,9 +32,12 @@ import { Jargon } from "@/components/jargon";
 import {
   SERVICES,
   CATEGORY_NAMES,
+  PRIORITY_NAMES,
+  getGoogleSsoServices,
   type Service,
   type ServiceCategory,
 } from "@/lib/services";
+import { TrackedLink } from "@/components/tracked-link";
 
 // Category icons
 const CATEGORY_ICONS: Record<ServiceCategory, React.ReactNode> = {
@@ -58,25 +61,26 @@ function groupByCategory(): Record<ServiceCategory, Service[]> {
   return groups;
 }
 
-// Priority badge colors
+// Priority badge colors - uses PRIORITY_NAMES from services.ts
 function getPriorityBadge(priority: Service["priority"]) {
+  const label = PRIORITY_NAMES[priority];
   switch (priority) {
     case "strongly-recommended":
       return (
         <span className="rounded-full bg-[oklch(0.72_0.19_145/0.15)] px-2 py-0.5 text-xs font-medium text-[oklch(0.72_0.19_145)]">
-          Strongly Recommended
+          {label}
         </span>
       );
     case "recommended":
       return (
         <span className="rounded-full bg-[oklch(0.75_0.18_195/0.15)] px-2 py-0.5 text-xs font-medium text-[oklch(0.75_0.18_195)]">
-          Recommended
+          {label}
         </span>
       );
     case "optional":
       return (
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-          Optional
+          {label}
         </span>
       );
   }
@@ -121,35 +125,32 @@ function ServiceCard({ service, isChecked, onToggle }: ServiceCardProps) {
           </p>
           <div className="flex flex-wrap gap-2 pt-1">
             {service.supportsGoogleSso && (
-              <a
+              <TrackedLink
                 href={service.googleSsoUrl || service.signupUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                trackingId={`service-google-sso-${service.id}`}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[oklch(0.72_0.19_145/0.3)] bg-[oklch(0.72_0.19_145/0.1)] px-2.5 py-1.5 text-xs font-medium text-[oklch(0.72_0.19_145)] transition-colors hover:bg-[oklch(0.72_0.19_145/0.2)]"
               >
                 <Sparkles className="h-3 w-3" />
                 Sign up with Google
                 <ExternalLink className="h-2.5 w-2.5" />
-              </a>
+              </TrackedLink>
             )}
-            <a
+            <TrackedLink
               href={service.signupUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              trackingId={`service-signup-${service.id}`}
               className="inline-flex items-center gap-1 rounded-lg border border-border/50 bg-card/50 px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
             >
               {service.supportsGoogleSso ? "Other signup options" : "Sign up"}
               <ExternalLink className="h-2.5 w-2.5" />
-            </a>
-            <a
+            </TrackedLink>
+            <TrackedLink
               href={service.docsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              trackingId={`service-docs-${service.id}`}
               className="inline-flex items-center gap-1 px-1.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
             >
               Docs
               <ExternalLink className="h-2.5 w-2.5" />
-            </a>
+            </TrackedLink>
           </div>
           {/* Post-install command preview */}
           {service.postInstallCommand && (
@@ -248,10 +249,10 @@ export default function AccountsPage() {
         </p>
       </div>
 
-      {/* Google SSO tip */}
+      {/* Google SSO tip - uses getGoogleSsoServices() to show count */}
       <AlertCard variant="tip" icon={Sparkles} title="Quick signup with Google">
-        Most services support Google SSO. Use the same Google account for all
-        of them to streamline your setup.
+        {getGoogleSsoServices().length} of {SERVICES.length} services support Google SSO.
+        Use the same Google account for all of them to streamline your setup.
       </AlertCard>
 
       {/* Progress indicator */}

@@ -32,22 +32,16 @@ NODE_OPTIONS="--max-old-space-size=32768" \
 
 ### `cod` (Codex CLI)
 ```bash
-codex --dangerously-bypass-approvals-and-sandbox \
-  -m gpt-5.2-codex \
-  -c model_reasoning_effort="xhigh" \
-  -c model_reasoning_summary_format=experimental \
-  --enable web_search_request
+codex --dangerously-bypass-approvals-and-sandbox
 ```
 - Bypass safety prompts
-- High reasoning effort
-- Web search enabled
+- No approval/sandbox checks
 
 ### `gmi` (Gemini CLI)
 ```bash
-gemini --yolo --model gemini-3-pro-preview
+gemini --yolo
 ```
 - YOLO mode (no confirmations)
-- Latest preview model
 
 ---
 
@@ -80,7 +74,7 @@ Follow the browser prompts to authenticate with your **ChatGPT Pro/Plus/Team acc
 
 ### Gemini CLI
 ```bash
-gemini auth
+gemini
 ```
 Follow the prompts to authenticate with your Google account.
 

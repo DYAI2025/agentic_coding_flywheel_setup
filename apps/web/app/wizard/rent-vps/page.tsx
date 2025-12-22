@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ExternalLink, Check, Server, ChevronDown, Cloud, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertCard } from "@/components/alert-card";
+import { TrackedLink } from "@/components/tracked-link";
 import { cn } from "@/lib/utils";
 import { markStepComplete } from "@/lib/wizardSteps";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
@@ -124,15 +125,14 @@ function ProviderCard({ provider, isExpanded, onToggle }: ProviderCardProps) {
             </div>
           )}
 
-          <a
+          <TrackedLink
             href={provider.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            trackingId={`vps-provider-${provider.id}`}
             className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
           >
             Go to {provider.name}
             <ExternalLink className="h-4 w-4" />
-          </a>
+          </TrackedLink>
         </div>
       )}
     </div>
@@ -411,9 +411,9 @@ export default function RentVPSPage() {
             <div className="space-y-4">
               <GuideStep number={1} title="Go to Contabo's website">
                 Click on &quot;Contabo&quot; above, or go to{" "}
-                <a href="https://contabo.com/en-us/vps/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                <TrackedLink href="https://contabo.com/en-us/vps/" trackingId="contabo-guide-link" className="text-primary underline">
                   contabo.com/en-us/vps
-                </a>
+                </TrackedLink>
               </GuideStep>
 
               <GuideStep number={2} title="Choose a plan with enough resources">

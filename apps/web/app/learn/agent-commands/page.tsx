@@ -128,8 +128,8 @@ const agents: AgentInfo[] = [
         description: "Direct prompt with task",
       },
       {
-        command: "gmi --sandbox",
-        description: "Run in sandboxed mode",
+        command: "gmi --yolo",
+        description: "Explicit YOLO mode (already default in vibe alias)",
       },
       {
         command: "gmi --help",

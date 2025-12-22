@@ -748,11 +748,11 @@ ACFS installs a comprehensive suite of **30+ tools** organized into categories:
 # Claude Code with max memory and background tasks
 alias cc='NODE_OPTIONS="--max-old-space-size=32768" ENABLE_BACKGROUND_TASKS=1 claude --dangerously-skip-permissions'
 
-# Codex with bypass, max reasoning, and dangerous filesystem access
-alias cod='codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.2-codex ...'
+# Codex with bypass and dangerous filesystem access
+alias cod='codex --dangerously-bypass-approvals-and-sandbox'
 
 # Gemini with yolo mode
-alias gmi='gemini --yolo --model gemini-3-pro-preview'
+alias gmi='gemini --yolo'
 ```
 
 **Installation & Updates:**

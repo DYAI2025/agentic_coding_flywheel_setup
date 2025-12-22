@@ -8,9 +8,9 @@
 set -euo pipefail
 
 # Ensure logging functions available
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$SCRIPT_DIR/../lib/logging.sh" ]]; then
-    source "$SCRIPT_DIR/../lib/logging.sh"
+ACFS_GENERATED_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh" ]]; then
+    source "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh"
 else
     # Fallback logging functions if logging.sh not found
     log_step() { echo "[*] $*"; }
@@ -22,13 +22,13 @@ else
 fi
 
 # Source install helpers (run_as_*_shell, selection helpers)
-if [[ -f "$SCRIPT_DIR/../lib/install_helpers.sh" ]]; then
-    source "$SCRIPT_DIR/../lib/install_helpers.sh"
+if [[ -f "$ACFS_GENERATED_SCRIPT_DIR/../lib/install_helpers.sh" ]]; then
+    source "$ACFS_GENERATED_SCRIPT_DIR/../lib/install_helpers.sh"
 fi
 
 # Source contract validation
-if [[ -f "$SCRIPT_DIR/../lib/contract.sh" ]]; then
-    source "$SCRIPT_DIR/../lib/contract.sh"
+if [[ -f "$ACFS_GENERATED_SCRIPT_DIR/../lib/contract.sh" ]]; then
+    source "$ACFS_GENERATED_SCRIPT_DIR/../lib/contract.sh"
 fi
 
 # Optional security verification for upstream installer scripts.
@@ -39,7 +39,7 @@ acfs_security_init() {
         return 0
     fi
 
-    local security_lib="$SCRIPT_DIR/../lib/security.sh"
+    local security_lib="$ACFS_GENERATED_SCRIPT_DIR/../lib/security.sh"
     if [[ ! -f "$security_lib" ]]; then
         log_error "Security library not found: $security_lib"
         return 1
@@ -55,18 +55,18 @@ acfs_security_init() {
 
 # Master installer - sources all category scripts
 
-source "$SCRIPT_DIR/install_base.sh"
-source "$SCRIPT_DIR/install_users.sh"
-source "$SCRIPT_DIR/install_shell.sh"
-source "$SCRIPT_DIR/install_cli.sh"
-source "$SCRIPT_DIR/install_network.sh"
-source "$SCRIPT_DIR/install_lang.sh"
-source "$SCRIPT_DIR/install_tools.sh"
-source "$SCRIPT_DIR/install_agents.sh"
-source "$SCRIPT_DIR/install_db.sh"
-source "$SCRIPT_DIR/install_cloud.sh"
-source "$SCRIPT_DIR/install_stack.sh"
-source "$SCRIPT_DIR/install_acfs.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_base.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_users.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_shell.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_cli.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_network.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_lang.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_tools.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_agents.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_db.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_cloud.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_stack.sh"
+source "$ACFS_GENERATED_SCRIPT_DIR/install_acfs.sh"
 
 # Install all modules in order
 install_all() {
