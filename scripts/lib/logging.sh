@@ -149,12 +149,13 @@ if ! declare -f show_progress_header >/dev/null; then
         fi
 
         # Print progress header (box is 65 chars wide, content is 63 chars)
+        # NOTE: Progress line assumes single-digit phase numbers (1-9). ACFS has 9 phases.
         echo "" >&2
         echo "╔═══════════════════════════════════════════════════════════════╗" >&2
         printf "║  Progress: [%s] %3d%%  (%d/%d)                 ║\n" \
                "$bar" "$percent" "$current" "$total" >&2
         printf "║  Current:  %-50s ║\n" "$display_name" >&2
-        printf "║  Elapsed:  %2dm %02ds                                            ║\n" \
+        printf "║  Elapsed:  %3dm %02ds                                           ║\n" \
                "$elapsed_min" "$elapsed_sec" >&2
         echo "╚═══════════════════════════════════════════════════════════════╝" >&2
         echo "" >&2
@@ -163,6 +164,7 @@ fi
 
 # Show installation completion message
 # Usage: show_completion $total_phases $total_seconds
+# NOTE: Phases line assumes single-digit phase numbers (1-9). ACFS has 9 phases.
 if ! declare -f show_completion >/dev/null; then
     show_completion() {
         local total="$1"
@@ -174,7 +176,7 @@ if ! declare -f show_completion >/dev/null; then
         echo "╔═══════════════════════════════════════════════════════════════╗" >&2
         echo "║              ✓ Installation Complete!                         ║" >&2
         echo "╠═══════════════════════════════════════════════════════════════╣" >&2
-        printf "║  Total time: %dm %02ds                                          ║\n" "$min" "$sec" >&2
+        printf "║  Total time: %3dm %02ds                                         ║\n" "$min" "$sec" >&2
         printf "║  Phases completed: %d/%d                                        ║\n" "$total" "$total" >&2
         echo "║                                                               ║" >&2
         echo "║  NEXT STEPS:                                                  ║" >&2
