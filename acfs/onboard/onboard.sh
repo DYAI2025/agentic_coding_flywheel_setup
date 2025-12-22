@@ -679,6 +679,9 @@ _show_menu() {
         done
 
         display_options+=("-------------------------")
+        if _is_all_complete; then
+            display_options+=("🏆 View Certificate")
+        fi
         display_options+=("Reset progress")
         display_options+=("Quit")
 
@@ -686,6 +689,10 @@ _show_menu() {
         choice=$(gum choose --header="Choose a lesson:" "${display_options[@]}")
 
         case "$choice" in
+            "🏆 View Certificate")
+                _show_completion_certificate
+                _show_menu
+                ;;
             "Reset progress")
                 _reset_progress
                 sleep 1
@@ -732,6 +739,9 @@ _show_menu() {
         done
 
         echo ""
+        if _is_all_complete; then
+            echo -e "  ${BOLD}[c]${NC} 🏆 View Certificate"
+        fi
         echo -e "  ${BOLD}[r]${NC} Reset progress"
         echo -e "  ${BOLD}[q]${NC} Quit"
         echo ""
@@ -743,6 +753,12 @@ _show_menu() {
                 local idx=$((choice - 1))
                 if (( idx >= 0 && idx < ${#LESSONS[@]} )); then
                     _run_lesson "$idx"
+                    _show_menu
+                fi
+                ;;
+            c|C)
+                if _is_all_complete; then
+                    _show_completion_certificate
                     _show_menu
                 fi
                 ;;
