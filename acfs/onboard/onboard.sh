@@ -71,6 +71,60 @@ _get_lesson_duration() {
 # Progress Tracking
 # ============================================================
 
+# Calculate progress statistics
+_calc_progress() {
+    local completed_count=0
+    local total=${#LESSONS[@]}
+    local completed
+    completed=$(_get_completed)
+
+    for c in $completed; do
+        ((completed_count++)) || true
+    done
+
+    local percent=0
+    if [[ $total -gt 0 ]]; then
+        percent=$((completed_count * 100 / total))
+    fi
+
+    echo "$completed_count|$total|$percent"
+}
+
+# Render a progress bar
+_render_progress_bar() {
+    local current=$1
+    local total=$2
+    local width=${3:-20}
+
+    local filled=$((current * width / total))
+    [[ $filled -gt $width ]] && filled=$width
+    local empty=$((width - filled))
+
+    local bar=""
+    for ((i=0; i<filled; i++)); do bar+="█"; done
+    for ((i=0; i<empty; i++)); do bar+="░"; done
+
+    echo -e "${GREEN}${bar}${NC}"
+}
+
+# Estimate remaining time
+_estimate_remaining() {
+    local completed=$1
+    local total=$2
+
+    local remaining=$((total - completed))
+    # Average 5 minutes per lesson
+    local minutes=$((remaining * 5))
+
+    if [[ $minutes -eq 0 ]]; then
+        echo "Complete!"
+    elif [[ $minutes -lt 60 ]]; then
+        echo "~${minutes} min"
+    else
+        echo "~$((minutes / 60))h ${minutes % 60}m"
+    fi
+}
+
 # Initialize progress file if it doesn't exist
 _init_progress() {
     if [[ ! -f "$PROGRESS_FILE" ]]; then
@@ -313,6 +367,17 @@ _show_menu() {
     local current
     current=$(_get_current)
 
+    # Get progress stats
+    local progress_data completed_count total percent
+    progress_data=$(_calc_progress)
+    completed_count=$(echo "$progress_data" | cut -d'|' -f1)
+    total=$(echo "$progress_data" | cut -d'|' -f2)
+    percent=$(echo "$progress_data" | cut -d'|' -f3)
+    local remaining_time
+    remaining_time=$(_estimate_remaining "$completed_count" "$total")
+    local progress_bar
+    progress_bar=$(_render_progress_bar "$completed_count" "$total" 20)
+
     clear
     echo ""
     echo -e "${BOLD}${CYAN}+-------------------------------------------------------------+${NC}"
@@ -320,6 +385,9 @@ _show_menu() {
     echo -e "${BOLD}${CYAN}|${NC}                                                             ${BOLD}${CYAN}|${NC}"
     echo -e "${BOLD}${CYAN}|${NC}  Learn the ACFS workflow step by step                       ${BOLD}${CYAN}|${NC}"
     echo -e "${BOLD}${CYAN}+-------------------------------------------------------------+${NC}"
+    echo ""
+    echo -e "  ${BOLD}Progress:${NC} $progress_bar ${completed_count}/${total} lessons (${percent}%)"
+    echo -e "  ${DIM}Estimated time remaining: ${remaining_time}${NC}"
     echo ""
 
     # Build menu options
@@ -477,8 +545,20 @@ EOF
 print_list() {
     _init_progress
 
+    # Get progress stats
+    local progress_data completed_count total percent
+    progress_data=$(_calc_progress)
+    completed_count=$(echo "$progress_data" | cut -d'|' -f1)
+    total=$(echo "$progress_data" | cut -d'|' -f2)
+    percent=$(echo "$progress_data" | cut -d'|' -f3)
+    local remaining_time
+    remaining_time=$(_estimate_remaining "$completed_count" "$total")
+    local progress_bar
+    progress_bar=$(_render_progress_bar "$completed_count" "$total" 20)
+
     echo ""
     echo -e "${BOLD}ACFS Onboarding Lessons${NC}"
+    echo -e "Progress: $progress_bar ${completed_count}/${total} (${percent}%) - ${remaining_time}"
     echo ""
 
     local i=0
