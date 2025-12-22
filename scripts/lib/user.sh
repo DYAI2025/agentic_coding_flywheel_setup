@@ -194,8 +194,9 @@ prompt_ssh_key() {
     local authorized_keys="/root/.ssh/authorized_keys"
 
     # 1. Check if we already have a valid key
+    # Match all OpenSSH key formats: ssh-*, ecdsa-sha2-*, sk-* (security keys)
     if [[ -f "$authorized_keys" ]]; then
-        if grep -q "^ssh-" "$authorized_keys" 2>/dev/null; then
+        if grep -qE "^(ssh-|ecdsa-sha2-|sk-)" "$authorized_keys" 2>/dev/null; then
             log_detail "SSH key already present, skipping prompt"
             return 0
         fi
