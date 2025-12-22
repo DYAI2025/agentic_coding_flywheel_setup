@@ -284,8 +284,8 @@ test.describe("SSH Connect Page - Critical Bug Prevention", () => {
     // Click continue
     await page.click('button:has-text("continue")');
 
-    // Should navigate to run-installer
-    await expect(page).toHaveURL(urlPathWithOptionalQuery("/wizard/run-installer"));
+    // Should navigate to accounts (step 7 follows ssh-connect step 6)
+    await expect(page).toHaveURL(urlPathWithOptionalQuery("/wizard/accounts"));
   });
 
   test("should display correct SSH command with user IP", async ({ page }) => {

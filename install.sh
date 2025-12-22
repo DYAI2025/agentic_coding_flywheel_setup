@@ -308,20 +308,35 @@ install_gum_early() {
         fi
     fi
 
-    # Quick apt update and gum install (silent unless it fails)
     echo -e "\033[0;90m    → Installing gum for enhanced UI...\033[0m" >&2
 
-    # Add Charm apt repo
+    # Step 1: Fetch Charm GPG key (with timeout)
+    echo -e "\033[0;90m      ↳ Fetching Charm repository key...\033[0m" >&2
     $sudo_cmd mkdir -p /etc/apt/keyrings 2>/dev/null || true
-    if curl "${ACFS_CURL_BASE_ARGS[@]}" https://repo.charm.sh/apt/gpg.key 2>/dev/null | \
+    if ! curl --connect-timeout 10 --max-time 30 -fsSL https://repo.charm.sh/apt/gpg.key 2>/dev/null | \
         $sudo_cmd gpg --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null; then
-        echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | \
-            $sudo_cmd tee /etc/apt/sources.list.d/charm.list > /dev/null 2>&1
-        $sudo_cmd apt-get update -y >/dev/null 2>&1 || true
-        if $sudo_cmd apt-get install -y gum >/dev/null 2>&1; then
-            HAS_GUM=true
-            echo -e "\033[0;32m    ✓ gum installed - enhanced UI enabled!\033[0m" >&2
-        fi
+        echo -e "\033[0;33m      ⚠ Could not fetch Charm key (skipping gum, will retry later)\033[0m" >&2
+        return 0
+    fi
+
+    # Step 2: Add apt repository
+    echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | \
+        $sudo_cmd tee /etc/apt/sources.list.d/charm.list > /dev/null 2>&1
+
+    # Step 3: Update apt (this can be slow on fresh systems)
+    echo -e "\033[0;90m      ↳ Updating package lists (may take 30-60s on fresh systems)...\033[0m" >&2
+    if ! timeout 120 $sudo_cmd apt-get update -y >/dev/null 2>&1; then
+        echo -e "\033[0;33m      ⚠ apt-get update slow/failed (skipping gum, will retry later)\033[0m" >&2
+        return 0
+    fi
+
+    # Step 4: Install gum
+    echo -e "\033[0;90m      ↳ Installing gum package...\033[0m" >&2
+    if timeout 60 $sudo_cmd apt-get install -y gum >/dev/null 2>&1; then
+        HAS_GUM=true
+        echo -e "\033[0;32m    ✓ gum installed - enhanced UI enabled!\033[0m" >&2
+    else
+        echo -e "\033[0;33m      ⚠ gum install failed (continuing without enhanced UI)\033[0m" >&2
     fi
 }
 
