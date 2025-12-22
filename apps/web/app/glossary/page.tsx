@@ -39,7 +39,7 @@ const LEARN_MORE: Partial<Record<string, LearnMoreLink>> = {
   ntm: { href: "/learn/ntm-core", label: "Learn: NTM command center" },
   "agent-mail": { href: "/learn/flywheel-loop", label: "Learn: The flywheel loop" },
   beads: { href: "/learn/flywheel-loop", label: "Learn: The flywheel loop" },
-  "codex-cli": { href: "/learn/agent-commands", label: "Learn: Agent commands" },
+  codex: { href: "/learn/agent-commands", label: "Learn: Agent commands" },
   "claude-code": { href: "/learn/agent-commands", label: "Learn: Agent commands" },
   "gemini-cli": { href: "/learn/agent-commands", label: "Learn: Agent commands" },
 };
@@ -369,4 +369,3 @@ export default function GlossaryPage() {
     </div>
   );
 }
-

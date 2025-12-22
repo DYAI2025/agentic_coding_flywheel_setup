@@ -45,7 +45,8 @@ export function Jargon({ term, children, className }: JargonProps) {
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const prefersReducedMotion = useReducedMotion();
 
-  const jargonData = getJargon(term);
+  const termKey = term.toLowerCase().replace(/[\s_]+/g, "-");
+  const jargonData = getJargon(termKey);
 
   // Check if we can use portals (client-side only)
   const canUsePortal = typeof document !== "undefined";
@@ -234,7 +235,7 @@ export function Jargon({ term, children, className }: JargonProps) {
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              <TooltipContent term={jargonData} termKey={term} />
+              <TooltipContent term={jargonData} termKey={termKey} />
             </motion.div>
           )}
         </AnimatePresence>,
@@ -262,7 +263,7 @@ export function Jargon({ term, children, className }: JargonProps) {
                 ref={tooltipRef}
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby={`jargon-sheet-title-${term}`}
+                aria-labelledby={`jargon-sheet-title-${termKey}`}
                 initial={prefersReducedMotion ? { opacity: 0 } : { y: "100%" }}
                 animate={prefersReducedMotion ? { opacity: 1 } : { y: 0 }}
                 exit={prefersReducedMotion ? { opacity: 0 } : { y: "100%" }}
@@ -288,7 +289,7 @@ export function Jargon({ term, children, className }: JargonProps) {
                   className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-2 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
-                  <SheetContent term={jargonData} termKey={term} />
+                  <SheetContent term={jargonData} termKey={termKey} />
                 </div>
               </motion.div>
             </>
