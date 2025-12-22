@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Key, ShieldCheck, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommandCard } from "@/components/command-card";
-import { AlertCard, DetailsSection } from "@/components/alert-card";
+import { AlertCard, DetailsSection, OutputPreview } from "@/components/alert-card";
 import { markStepComplete } from "@/lib/wizardSteps";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { useUserOS } from "@/lib/userPreferences";
@@ -233,24 +233,65 @@ export default function GenerateSSHKeyPage() {
               </GuideStep>
 
               <GuideStep number={4} title="Answer the prompts">
-                The terminal will ask you two questions. For both, just press
-                <kbd className="ml-1 rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd> without typing anything:
-                <br /><br />
-                <strong>First prompt:</strong> &quot;Enter passphrase&quot;
-                → Just press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd> (leave it empty)
-                <br /><br />
-                <strong>Second prompt:</strong> &quot;Enter same passphrase again&quot;
-                → Press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd> again
-                <br /><br />
-                <em className="text-xs">
-                  Note: Not using a passphrase is fine for this purpose. It makes things simpler.
-                </em>
+                The terminal will ask you a few questions. Here&apos;s exactly what you&apos;ll see:
+
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <p className="mb-2 font-medium text-foreground">First: File location</p>
+                    <OutputPreview title="You will see:">
+                      <p className="text-[oklch(0.72_0.19_145)]">Enter file in which to save the key (/Users/you/.ssh/acfs_ed25519):</p>
+                    </OutputPreview>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      <strong className="text-foreground">→ Just press Enter!</strong> The path is already set by our command.
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="mb-2 font-medium text-foreground">Second: Passphrase</p>
+                    <OutputPreview title="You will see:">
+                      <p className="text-[oklch(0.72_0.19_145)]">Enter passphrase (empty for no passphrase):</p>
+                    </OutputPreview>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      <strong className="text-foreground">→ Press Enter without typing anything.</strong> Leave it empty.
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="mb-2 font-medium text-foreground">Third: Confirm passphrase</p>
+                    <OutputPreview title="You will see:">
+                      <p className="text-[oklch(0.72_0.19_145)]">Enter same passphrase again:</p>
+                    </OutputPreview>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      <strong className="text-foreground">→ Press Enter again.</strong> That&apos;s it!
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Note: Not using a passphrase is fine for this purpose. It keeps things simple.
+                </p>
               </GuideStep>
 
               <GuideStep number={5} title="Success!">
-                You should see a message like &quot;Your identification has been saved&quot;
-                and some ASCII art that looks like a random pattern in a box.
-                This means your key was created!
+                When the key is created, you&apos;ll see a confirmation:
+                <div className="mt-3">
+                  <OutputPreview title="You will see something like:">
+                    <p className="text-[oklch(0.72_0.19_145)]">Your identification has been saved in /Users/you/.ssh/acfs_ed25519</p>
+                    <p className="text-[oklch(0.72_0.19_145)]">Your public key has been saved in /Users/you/.ssh/acfs_ed25519.pub</p>
+                    <p className="mt-2 text-muted-foreground">The key fingerprint is:</p>
+                    <p className="text-muted-foreground">SHA256:xYz123abc... acfs</p>
+                    <p className="mt-2 text-muted-foreground">The key&apos;s randomart image is:</p>
+                    <pre className="text-xs text-muted-foreground">{`+--[ED25519 256]--+
+|     .o+*o.      |
+|    . o.=o+ .    |
+|     . =.= o     |
+|      o + = .    |
++----[SHA256]-----+`}</pre>
+                  </OutputPreview>
+                </div>
+                <p className="mt-3 text-sm">
+                  <strong className="text-[oklch(0.72_0.19_145)]">The randomart pattern means it worked!</strong> You now have SSH keys.
+                </p>
               </GuideStep>
             </div>
           </GuideSection>
