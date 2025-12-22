@@ -5,12 +5,12 @@
 # Installs modern CLI replacements that acfs.zshrc depends on
 # ============================================================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI_TOOLS_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Ensure we have logging functions available
 if [[ -z "${ACFS_BLUE:-}" ]]; then
     # shellcheck source=logging.sh
-    source "$SCRIPT_DIR/logging.sh"
+    source "$CLI_TOOLS_SCRIPT_DIR/logging.sh"
 fi
 
 # ============================================================
@@ -101,13 +101,13 @@ _cli_require_security() {
         return 0
     fi
 
-    if [[ ! -f "$SCRIPT_DIR/security.sh" ]]; then
-        log_warn "Security library not found ($SCRIPT_DIR/security.sh); refusing to run upstream installer scripts"
+    if [[ ! -f "$CLI_TOOLS_SCRIPT_DIR/security.sh" ]]; then
+        log_warn "Security library not found ($CLI_TOOLS_SCRIPT_DIR/security.sh); refusing to run upstream installer scripts"
         return 1
     fi
 
     # shellcheck source=security.sh
-    source "$SCRIPT_DIR/security.sh"
+    source "$CLI_TOOLS_SCRIPT_DIR/security.sh"
     if ! load_checksums; then
         log_warn "checksums.yaml not available; refusing to run upstream installer scripts"
         return 1
@@ -191,7 +191,7 @@ install_cargo_cli_tools() {
                 local expected_sha256
                 expected_sha256="$(get_checksum zoxide)"
                 if [[ -n "$expected_sha256" ]]; then
-                    _cli_run_as_user "source '$SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'zoxide' | sh" || true
+                    _cli_run_as_user "source '$CLI_TOOLS_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'zoxide' | sh" || true
                 else
                     log_warn "No checksum recorded for zoxide; skipping unverified installer fallback"
                 fi
@@ -361,7 +361,7 @@ install_atuin() {
         return 1
     fi
 
-    if ! _cli_run_as_user "source '$SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'atuin' | sh"; then
+    if ! _cli_run_as_user "source '$CLI_TOOLS_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'atuin' | sh"; then
         log_warn "Could not install atuin"
     fi
 

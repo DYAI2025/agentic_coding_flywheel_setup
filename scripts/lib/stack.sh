@@ -5,12 +5,12 @@
 # Installs all 8 Dicklesworthstone tools
 # ============================================================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Ensure we have logging functions available
 if [[ -z "${ACFS_BLUE:-}" ]]; then
     # shellcheck source=logging.sh
-    source "$SCRIPT_DIR/logging.sh"
+    source "$STACK_SCRIPT_DIR/logging.sh"
 fi
 
 # ============================================================
@@ -100,13 +100,13 @@ _stack_require_security() {
         return 0
     fi
 
-    if [[ ! -f "$SCRIPT_DIR/security.sh" ]]; then
-        log_warn "Security library not found ($SCRIPT_DIR/security.sh); refusing to run upstream installer scripts"
+    if [[ ! -f "$STACK_SCRIPT_DIR/security.sh" ]]; then
+        log_warn "Security library not found ($STACK_SCRIPT_DIR/security.sh); refusing to run upstream installer scripts"
         return 1
     fi
 
     # shellcheck source=security.sh
-    source "$SCRIPT_DIR/security.sh"
+    source "$STACK_SCRIPT_DIR/security.sh"
     if ! load_checksums; then
         log_warn "checksums.yaml not available; refusing to run upstream installer scripts"
         return 1
@@ -139,7 +139,7 @@ _stack_run_installer() {
         return 1
     fi
 
-    _stack_run_as_user "source '$SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' '$tool' | bash -s -- ${args:-}"
+    _stack_run_as_user "source '$STACK_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' '$tool' | bash -s -- ${args:-}"
 }
 
 # Check if a stack tool is installed

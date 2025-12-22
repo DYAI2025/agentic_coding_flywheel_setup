@@ -5,12 +5,12 @@
 # Installs Bun, uv (Python), Rust, and Go
 # ============================================================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LANG_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Ensure we have logging functions available
 if [[ -z "${ACFS_BLUE:-}" ]]; then
     # shellcheck source=logging.sh
-    source "$SCRIPT_DIR/logging.sh"
+    source "$LANG_SCRIPT_DIR/logging.sh"
 fi
 
 # ============================================================
@@ -76,13 +76,13 @@ _lang_require_security() {
         return 0
     fi
 
-    if [[ ! -f "$SCRIPT_DIR/security.sh" ]]; then
-        log_warn "Security library not found ($SCRIPT_DIR/security.sh); refusing to run upstream installer scripts"
+    if [[ ! -f "$LANG_SCRIPT_DIR/security.sh" ]]; then
+        log_warn "Security library not found ($LANG_SCRIPT_DIR/security.sh); refusing to run upstream installer scripts"
         return 1
     fi
 
     # shellcheck source=security.sh
-    source "$SCRIPT_DIR/security.sh"
+    source "$LANG_SCRIPT_DIR/security.sh"
     if ! load_checksums; then
         log_warn "checksums.yaml not available; refusing to run upstream installer scripts"
         return 1
@@ -137,7 +137,7 @@ install_bun() {
         return 1
     fi
 
-    if ! _lang_run_as_user "source '$SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'bun' | bash"; then
+    if ! _lang_run_as_user "source '$LANG_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'bun' | bash"; then
         log_warn "Bun installation failed"
         return 1
     fi
@@ -205,7 +205,7 @@ install_uv() {
         return 1
     fi
 
-    if ! _lang_run_as_user "source '$SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'uv' | sh"; then
+    if ! _lang_run_as_user "source '$LANG_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'uv' | sh"; then
         log_warn "uv installation failed"
         return 1
     fi
@@ -280,7 +280,7 @@ install_rust() {
         return 1
     fi
 
-    if ! _lang_run_as_user "source '$SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'rust' | sh -s -- -y"; then
+    if ! _lang_run_as_user "source '$LANG_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' 'rust' | sh -s -- -y"; then
         log_warn "Rust installation failed"
         return 1
     fi
