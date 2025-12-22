@@ -29,6 +29,7 @@ Usage:
   acfs cheatsheet --category <name>
   acfs cheatsheet --search <pattern>
   acfs cheatsheet --json
+  acfs cheatsheet --zshrc <path>
 
 Examples:
   acfs cheatsheet
@@ -91,6 +92,9 @@ cheatsheet_parse_zshrc() {
 
   local current_category="Misc"
   local line rest
+  local overall_active=true
+  local -a if_parent_active=()
+  local -a if_branch_taken=()
 
   while IFS= read -r line || [[ -n "$line" ]]; do
     # Section markers
@@ -102,6 +106,79 @@ cheatsheet_parse_zshrc() {
       current_category="$(normalize_category "${BASH_REMATCH[1]}")"
       continue
     fi
+
+    # Track simple conditional blocks used in acfs.zshrc (command -v ...; then / elif / else / fi).
+    # This keeps the cheatsheet aligned with what will actually be active on the current system.
+    if [[ "$line" =~ ^[[:space:]]*if[[:space:]]+command[[:space:]]+-v[[:space:]]+([[:alnum:]_.+-]+) ]]; then
+      local tool="${BASH_REMATCH[1]}"
+      local cond=false
+      command -v "$tool" &>/dev/null && cond=true
+
+      if_parent_active+=("$overall_active")
+      if_branch_taken+=("$cond")
+
+      if [[ "$overall_active" == "true" && "$cond" == "true" ]]; then
+        overall_active=true
+      else
+        overall_active=false
+      fi
+      continue
+    fi
+
+    if [[ "${#if_parent_active[@]}" -gt 0 && "$line" =~ ^[[:space:]]*elif[[:space:]]+command[[:space:]]+-v[[:space:]]+([[:alnum:]_.+-]+) ]]; then
+      local tool="${BASH_REMATCH[1]}"
+      local idx=$(( ${#if_parent_active[@]} - 1 ))
+      local parent_active="${if_parent_active[$idx]}"
+      local already_taken="${if_branch_taken[$idx]}"
+
+      if [[ "$already_taken" == "true" ]]; then
+        overall_active=false
+        continue
+      fi
+
+      local cond=false
+      command -v "$tool" &>/dev/null && cond=true
+      if_branch_taken[$idx]="$cond"
+
+      if [[ "$parent_active" == "true" && "$cond" == "true" ]]; then
+        overall_active=true
+      else
+        overall_active=false
+      fi
+      continue
+    fi
+
+    if [[ "${#if_parent_active[@]}" -gt 0 && "$line" =~ ^[[:space:]]*else([[:space:]]*#.*)?$ ]]; then
+      local idx=$(( ${#if_parent_active[@]} - 1 ))
+      local parent_active="${if_parent_active[$idx]}"
+      local already_taken="${if_branch_taken[$idx]}"
+
+      if [[ "$parent_active" == "true" && "$already_taken" != "true" ]]; then
+        overall_active=true
+      else
+        overall_active=false
+      fi
+      if_branch_taken[$idx]=true
+      continue
+    fi
+
+    if [[ "${#if_parent_active[@]}" -gt 0 && "$line" =~ ^[[:space:]]*fi([[:space:]]*#.*)?$ ]]; then
+      local idx=$(( ${#if_parent_active[@]} - 1 ))
+      overall_active="${if_parent_active[$idx]}"
+      unset 'if_parent_active[$idx]'
+      unset 'if_branch_taken[$idx]'
+      continue
+    fi
+
+    local line_active="$overall_active"
+    # Handle one-line conditionals: `command -v tool ... && alias name='cmd'`
+    if [[ "$line" =~ ^[[:space:]]*command[[:space:]]+-v[[:space:]]+([[:alnum:]_.+-]+)[^#]*&&[[:space:]]*alias[[:space:]] ]]; then
+      local tool="${BASH_REMATCH[1]}"
+      if ! command -v "$tool" &>/dev/null; then
+        line_active=false
+      fi
+    fi
+    [[ "$line_active" == "true" ]] || continue
 
     rest="$line"
     while [[ "$rest" == *"alias "* ]]; do
@@ -160,18 +237,21 @@ cheatsheet_collect_entries() {
     entries+=("$line")
   done < <(cheatsheet_parse_zshrc "$zshrc" || true)
 
-  # De-dupe by name keeping the first definition.
-  # This ensures preferred commands (lsd/eza) from conditional if-blocks
-  # take precedence over fallback definitions in else-blocks.
+  # De-dupe by name keeping the last definition (matches shell alias overriding behavior).
   local -A seen=()
+  local -a dedup_rev=()
   local i
-  for ((i=0; i<${#entries[@]}; i++)); do
+  for ((i=${#entries[@]}-1; i>=0; i--)); do
     IFS='|' read -r _cat name _cmd _kind <<<"${entries[$i]}"
-    if [[ -n "${seen[$name]:-}" ]]; then
+    if [[ -z "$name" || -n "${seen[$name]:-}" ]]; then
       continue
     fi
     seen[$name]=1
-    echo "${entries[$i]}"
+    dedup_rev+=("${entries[$i]}")
+  done
+
+  for ((i=${#dedup_rev[@]}-1; i>=0; i--)); do
+    echo "${dedup_rev[$i]}"
   done
 }
 
@@ -318,6 +398,12 @@ main() {
         ;;
     esac
   done
+
+  if [[ ! -f "$zshrc" ]]; then
+    echo "Error: zshrc not found: $zshrc" >&2
+    echo "Hint: re-run the ACFS installer, or pass --zshrc <path> / set ACFS_HOME." >&2
+    return 1
+  fi
 
   if [[ "$json_mode" == "true" ]]; then
     cheatsheet_render_json "$category_filter" "$search_filter" "$zshrc"
