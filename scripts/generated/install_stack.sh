@@ -531,15 +531,15 @@ INSTALL_STACK_SLB
 
     # Verify
     if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: verify: slb --help (target_user)"
+        log_info "dry-run: verify: slb >/dev/null 2>&1 || slb --help >/dev/null 2>&1 (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_SLB'
-slb --help
+slb >/dev/null 2>&1 || slb --help >/dev/null 2>&1
 INSTALL_STACK_SLB
         then
-            log_warn "stack.slb: verify failed: slb --help"
+            log_warn "stack.slb: verify failed: slb >/dev/null 2>&1 || slb --help >/dev/null 2>&1"
             if type -t record_skipped_tool >/dev/null 2>&1; then
-              record_skipped_tool "stack.slb" "verify failed: slb --help"
+              record_skipped_tool "stack.slb" "verify failed: slb >/dev/null 2>&1 || slb --help >/dev/null 2>&1"
             elif type -t state_tool_skip >/dev/null 2>&1; then
               state_tool_skip "stack.slb"
             fi

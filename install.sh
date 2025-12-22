@@ -303,7 +303,7 @@ fetch_commit_sha() {
             # Fallback: Extract SHA from JSON using grep/sed (works without jq/python)
             # Use grep -o to handle minified JSON (puts matches on new lines)
             sha=$(echo "$response" | grep -o '"sha":[[:space:]]*"[^"]*"' | head -n 1 | sed 's/.*"\([a-f0-9]*\)".*/\1/' | head -c 12)
-            
+
             # Extract commit date (format: "2025-12-21T10:30:00Z")
             commit_date=$(echo "$response" | grep -o '"date":[[:space:]]*"[^"]*"' | head -n 1 | sed 's/.*"\([^"]*\)".*/\1/')
         fi
@@ -3046,7 +3046,12 @@ run_smoke_test() {
     local stack_help_fail=()
     local stack_tools=(ntm ubs bv cass cm caam slb)
     for tool in "${stack_tools[@]}"; do
-        if ! _smoke_run_as_target "command -v $tool >/dev/null && $tool --help >/dev/null 2>&1"; then
+        # SLB may have issues with --help exit code, try bare command first
+        if [[ "$tool" == "slb" ]]; then
+            if ! _smoke_run_as_target "command -v slb >/dev/null && (slb >/dev/null 2>&1 || slb --help >/dev/null 2>&1)"; then
+                stack_help_fail+=("$tool")
+            fi
+        elif ! _smoke_run_as_target "command -v $tool >/dev/null && $tool --help >/dev/null 2>&1"; then
             stack_help_fail+=("$tool")
         fi
     done

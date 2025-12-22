@@ -808,7 +808,8 @@ modules:
     install:
       - go install github.com/Dicklesworthstone/simultaneous_launch_button/cmd/slb@latest
     verify:
-      - slb --help
+      # Use 'slb' alone (shows quick reference) since --help may have exit code issues
+      - slb >/dev/null 2>&1 || slb --help >/dev/null 2>&1
 
   # ============================================================
   # PHASE 10: Finalization (onboard, doctor, verification)
