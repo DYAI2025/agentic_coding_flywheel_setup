@@ -107,15 +107,15 @@ log_check() {
         case "$status" in
             pass)
                 echo -e "${CHECK} ${message}"
-                [[ -n "$detail" ]] && echo -e "    ${GRAY}${detail}${NC}"
+                [[ -n "$detail" ]] && echo -e "    ${GRAY}${detail}${NC}" || true
                 ;;
             warn)
                 echo -e "${WARN} ${YELLOW}${message}${NC}"
-                [[ -n "$detail" ]] && echo -e "    ${GRAY}${detail}${NC}"
+                [[ -n "$detail" ]] && echo -e "    ${GRAY}${detail}${NC}" || true
                 ;;
             fail)
                 echo -e "${FAIL} ${RED}${message}${NC}"
-                [[ -n "$detail" ]] && echo -e "    ${GRAY}${detail}${NC}"
+                [[ -n "$detail" ]] && echo -e "    ${GRAY}${detail}${NC}" || true
                 ;;
         esac
     fi
