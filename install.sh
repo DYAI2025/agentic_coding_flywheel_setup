@@ -1120,13 +1120,14 @@ bootstrap_repo_archive() {
         "*/scripts/preflight.sh" \
         "*/acfs/**" \
         "*/checksums.yaml" \
-        "*/acfs.manifest.yaml"; then
+        "*/acfs.manifest.yaml" \
+        "*/VERSION"; then
         log_error "Failed to extract ACFS bootstrap archive (tar error)"
         return 1
     fi
 
-    if [[ ! -f "$tmp_dir/acfs.manifest.yaml" ]] || [[ ! -f "$tmp_dir/checksums.yaml" ]]; then
-        log_error "Bootstrap archive missing required manifest/checksums files"
+    if [[ ! -f "$tmp_dir/acfs.manifest.yaml" ]] || [[ ! -f "$tmp_dir/checksums.yaml" ]] || [[ ! -f "$tmp_dir/VERSION" ]]; then
+        log_error "Bootstrap archive missing required manifest/checksums/VERSION files"
         return 1
     fi
 
