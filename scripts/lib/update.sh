@@ -763,8 +763,8 @@ update_stack() {
                     # Kill old session if exists
                     tmux kill-session -t "$tmux_session" 2>/dev/null || true
 
-                    # Launch in tmux
-                    if run_cmd "MCP Agent Mail (tmux)" tmux new-session -d -s "$tmux_session" "$tmp_install --dir $HOME/mcp_agent_mail --yes"; then
+                    # Launch in tmux (tmux does not split a single string into argv)
+                    if run_cmd "MCP Agent Mail (tmux)" tmux new-session -d -s "$tmux_session" "$tmp_install" --dir "$HOME/mcp_agent_mail" --yes; then
                         log_to_file "Started MCP Agent Mail update in tmux session: $tmux_session"
                         [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}Update running in tmux session '$tmux_session'${NC}"
                     fi
