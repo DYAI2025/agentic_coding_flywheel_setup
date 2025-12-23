@@ -126,7 +126,7 @@ const ISSUES: Omit<TroubleshootingIssue, "searchable">[] = [
     symptoms: [
       "Permission denied (publickey)",
       "No more authentication methods to try",
-      "Host key verification failed",
+      "Permission denied (publickey,keyboard-interactive)",
     ],
     causes: [
       "SSH key not added to VPS",
