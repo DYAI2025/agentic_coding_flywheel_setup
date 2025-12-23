@@ -451,6 +451,16 @@ export default function InstallTerminalPage() {
     );
   }
 
+  // Linux users skip this step; render a neutral loading state to avoid briefly
+  // showing Windows-specific content before the redirect effect runs.
+  if (os === "linux") {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Terminal className="h-8 w-8 animate-pulse text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
