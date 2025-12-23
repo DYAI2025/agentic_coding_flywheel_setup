@@ -520,9 +520,9 @@ function generateVerifiedInstallerSnippet(module: Module): string[] {
   lines.push('', '# No unverified fallback: verified install is required');
   lines.push('if [[ "$install_success" != "true" ]]; then');
   if (fallbackUrl) {
-    lines.push(`    log_error "Unverified fallback_url configured (refusing): ${fallbackUrl}"`);
+    lines.push(`    log_error "Unverified fallback_url configured (refusing): ${escapeBash(fallbackUrl)}"`);
   }
-  lines.push(`    log_error "Verified install failed for ${module.id}"`);
+  lines.push(`    log_error "Verified install failed for ${escapeBash(module.id)}"`);
   lines.push('    false');
   lines.push('fi');
 

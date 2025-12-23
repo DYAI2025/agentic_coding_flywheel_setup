@@ -49,7 +49,13 @@ export const ModuleSchema = z
     // Verified installer reference
     verified_installer: z
       .object({
-        tool: z.string().min(1, 'Verified installer tool cannot be empty'),
+        tool: z
+          .string()
+          .min(1, 'Verified installer tool cannot be empty')
+          .regex(
+            /^[a-z][a-z0-9_]*$/,
+            'Tool name must be lowercase alphanumeric with underscores (e.g., "bun", "claude", "mcp_agent_mail")'
+          ),
         runner: VerifiedInstallerRunnerSchema,
         args: z.array(z.string()).default([]),
         // Fallback URL for direct install if verified install fails

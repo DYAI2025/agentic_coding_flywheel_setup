@@ -232,7 +232,7 @@ mark_completed() {
             .current = (
                 [range(0;9) as $i | select(($o.completed | index($i)) == null) | $i] | first // 8
             ) |
-            .last_accessed = now | todate
+            .last_accessed = (now | todateiso8601)
         ' "$PROGRESS_FILE" > "$tmp" && mv "$tmp" "$PROGRESS_FILE"
     else
         # Fallback: warn user that progress is not saved
@@ -250,7 +250,7 @@ set_current() {
         tmp=$(mktemp "${TMPDIR:-/tmp}/acfs_onboard.XXXXXX" 2>/dev/null) || tmp="/tmp/acfs_onboard_temp.$$"
         jq --argjson lesson "$lesson" '
             .current = $lesson |
-            .last_accessed = now | todate
+            .last_accessed = (now | todateiso8601)
         ' "$PROGRESS_FILE" > "$tmp" && mv "$tmp" "$PROGRESS_FILE"
     fi
 }
