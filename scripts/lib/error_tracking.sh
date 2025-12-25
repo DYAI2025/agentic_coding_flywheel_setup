@@ -125,26 +125,33 @@ try_step() {
 
     # Create temp file for output capture
     local output_file
-    output_file=$(mktemp "${TMPDIR:-/tmp}/acfs_step.XXXXXX" 2>/dev/null) || output_file="/tmp/acfs_step_output.$$"
+    output_file=$(mktemp "${TMPDIR:-/tmp}/acfs_step.XXXXXX" 2>/dev/null) || output_file=""
 
     local exit_code=0
 
     # Execute command with output capture
     # We use process substitution to capture both stdout and stderr
-    if [[ "$ERROR_VERBOSE" == "true" ]]; then
-        # Verbose mode: show output in real-time AND capture it
-        if "$@" 2>&1 | tee "$output_file"; then
-            exit_code=0
+    if [[ -n "$output_file" ]]; then
+        if [[ "$ERROR_VERBOSE" == "true" ]]; then
+            # Verbose mode: show output in real-time AND capture it
+            if "$@" 2>&1 | tee "$output_file"; then
+                exit_code=0
+            else
+                exit_code=${PIPESTATUS[0]}
+            fi
         else
-            exit_code=${PIPESTATUS[0]}
+            # Normal mode: capture silently, show on error
+            if "$@" > "$output_file" 2>&1; then
+                exit_code=0
+            else
+                exit_code=$?
+            fi
         fi
     else
-        # Normal mode: capture silently, show on error
-        if "$@" > "$output_file" 2>&1; then
-            exit_code=0
-        else
-            exit_code=$?
-        fi
+        # If we cannot safely create a temp file, run without capture rather than
+        # falling back to predictable /tmp paths (symlink attack risk under sudo/root).
+        "$@"
+        exit_code=$?
     fi
 
     if [[ $exit_code -eq 0 ]]; then
@@ -152,7 +159,9 @@ try_step() {
         LAST_ERROR=""
         LAST_ERROR_CODE=0
         LAST_ERROR_OUTPUT=""
-        rm -f "$output_file" 2>/dev/null || true
+        if [[ -n "$output_file" ]]; then
+            rm -f "$output_file" 2>/dev/null || true
+        fi
         return 0
     fi
 
@@ -162,7 +171,7 @@ try_step() {
     LAST_ERROR_TIME=$(date -Iseconds)
 
     # Capture and truncate output
-    if [[ -f "$output_file" ]]; then
+    if [[ -n "$output_file" && -f "$output_file" ]]; then
         local full_output
         full_output=$(cat "$output_file" 2>/dev/null || echo "")
 
@@ -172,9 +181,13 @@ try_step() {
         else
             LAST_ERROR_OUTPUT="$full_output"
         fi
+    else
+        LAST_ERROR_OUTPUT="(command output unavailable: mktemp failed)"
     fi
 
-    rm -f "$output_file" 2>/dev/null || true
+    if [[ -n "$output_file" ]]; then
+        rm -f "$output_file" 2>/dev/null || true
+    fi
 
     # Update state file with failure info
     if type -t state_phase_fail &>/dev/null; then
@@ -521,9 +534,20 @@ retry_with_backoff() {
     local exit_code=0
     local stderr_file
     local stdout_file
+    local stderr_content=""
 
-    stderr_file=$(mktemp "${TMPDIR:-/tmp}/acfs_retry_stderr.XXXXXX" 2>/dev/null) || stderr_file="/tmp/acfs_retry_stderr.$$"
-    stdout_file=$(mktemp "${TMPDIR:-/tmp}/acfs_retry_stdout.XXXXXX" 2>/dev/null) || stdout_file="/tmp/acfs_retry_stdout.$$"
+    stderr_file=$(mktemp "${TMPDIR:-/tmp}/acfs_retry_stderr.XXXXXX" 2>/dev/null) || stderr_file=""
+    stdout_file=$(mktemp "${TMPDIR:-/tmp}/acfs_retry_stdout.XXXXXX" 2>/dev/null) || stdout_file=""
+
+    local use_temp_files="true"
+    if [[ -z "$stderr_file" || -z "$stdout_file" ]]; then
+        use_temp_files="false"
+        # Best-effort cleanup if only one temp file was created.
+        [[ -n "$stderr_file" ]] && rm -f "$stderr_file" 2>/dev/null || true
+        [[ -n "$stdout_file" ]] && rm -f "$stdout_file" 2>/dev/null || true
+        stderr_file=""
+        stdout_file=""
+    fi
 
     for ((attempt=0; attempt < max_attempts; attempt++)); do
         local delay=${RETRY_DELAYS[$attempt]}
@@ -538,9 +562,34 @@ retry_with_backoff() {
             sleep "$delay"
         fi
 
-        # Execute command, capturing stdout and stderr separately
-        "$@" > "$stdout_file" 2> "$stderr_file"
-        exit_code=$?
+        stderr_content=""
+        if [[ "$use_temp_files" == "true" ]]; then
+            # Execute command, capturing stdout and stderr separately
+            "$@" > "$stdout_file" 2> "$stderr_file"
+            exit_code=$?
+            stderr_content=$(cat "$stderr_file" 2>/dev/null || echo "")
+        else
+            # Fallback: capture combined output in-memory.
+            #
+            # This is only used if mktemp fails; we avoid predictable /tmp paths.
+            # Output is only emitted on success to preserve the usual quiet-on-failure behavior.
+            local combined_output=""
+            combined_output="$("$@" 2>&1)"
+            exit_code=$?
+            stderr_content="$combined_output"
+
+            if [[ $exit_code -eq 0 ]]; then
+                if ((attempt > 0)); then
+                    if type -t log_info &>/dev/null; then
+                        log_info "$description succeeded on retry $attempt"
+                    else
+                        echo "  [retry] $description succeeded on retry $attempt" >&2
+                    fi
+                fi
+                printf '%s' "$combined_output"
+                return 0
+            fi
+        fi
 
         if [[ $exit_code -eq 0 ]]; then
             # Success
@@ -558,9 +607,6 @@ retry_with_backoff() {
         fi
 
         # Check if error is retryable
-        local stderr_content
-        stderr_content=$(cat "$stderr_file" 2>/dev/null || echo "")
-
         if ! is_retryable_error "$exit_code" "$stderr_content"; then
             # Not a transient network error - don't retry
             if type -t log_warn &>/dev/null; then
@@ -568,11 +614,22 @@ retry_with_backoff() {
             else
                 echo "  [retry] $description failed with non-retryable error (exit $exit_code)" >&2
             fi
+            # Set error context for callers (e.g. try_step_with_backoff)
+            LAST_ERROR="$description failed with non-retryable error (exit $exit_code)"
+            LAST_ERROR_CODE=$exit_code
+            LAST_ERROR_TIME=$(date -Iseconds)
+            if [[ "$use_temp_files" == "true" ]]; then
+                LAST_ERROR_OUTPUT=$(head -c "$ERROR_OUTPUT_MAX_LENGTH" "$stderr_file" 2>/dev/null || echo "")
+            else
+                LAST_ERROR_OUTPUT="${stderr_content:0:$ERROR_OUTPUT_MAX_LENGTH}"
+            fi
             # Output stderr for debugging
             if [[ -n "$stderr_content" ]]; then
                 echo "$stderr_content" >&2
             fi
-            rm -f "$stderr_file" "$stdout_file" 2>/dev/null
+            if [[ "$use_temp_files" == "true" ]]; then
+                rm -f "$stderr_file" "$stdout_file" 2>/dev/null
+            fi
             return "$exit_code"
         fi
 
@@ -596,9 +653,15 @@ retry_with_backoff() {
     LAST_ERROR="$description failed after $max_attempts retry attempts"
     LAST_ERROR_CODE=$exit_code
     LAST_ERROR_TIME=$(date -Iseconds)
-    LAST_ERROR_OUTPUT=$(head -c "$ERROR_OUTPUT_MAX_LENGTH" "$stderr_file" 2>/dev/null || echo "")
+    if [[ "$use_temp_files" == "true" ]]; then
+        LAST_ERROR_OUTPUT=$(head -c "$ERROR_OUTPUT_MAX_LENGTH" "$stderr_file" 2>/dev/null || echo "")
+    else
+        LAST_ERROR_OUTPUT="${stderr_content:0:$ERROR_OUTPUT_MAX_LENGTH}"
+    fi
 
-    rm -f "$stderr_file" "$stdout_file" 2>/dev/null
+    if [[ "$use_temp_files" == "true" ]]; then
+        rm -f "$stderr_file" "$stdout_file" 2>/dev/null
+    fi
     return "$exit_code"
 }
 

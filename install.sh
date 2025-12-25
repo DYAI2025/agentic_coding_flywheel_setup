@@ -1838,6 +1838,18 @@ run_ubuntu_upgrade_phase() {
                     [[ "$YES_MODE" == "true" ]] && continue_args+=(--yes)
                     [[ -n "${INSTALL_MODE:-}" ]] && continue_args+=(--mode "$INSTALL_MODE")
 
+                    # Shell-escape values we embed into the generated script.
+                    local repo_ref_q
+                    repo_ref_q=$(printf '%q' "$repo_ref")
+                    local install_url_q
+                    install_url_q=$(printf '%q' "$install_url")
+                    local continue_args_q=""
+                    local arg=""
+                    for arg in "${continue_args[@]}"; do
+                        continue_args_q+=" $(printf '%q' "$arg")"
+                    done
+                    continue_args_q="${continue_args_q# }"
+
                     cat > "$continue_script" << CONTINUE_SCRIPT
 #!/usr/bin/env bash
 # Continue ACFS installation after pre-upgrade reboot (kernel updates applied)
@@ -1846,9 +1858,9 @@ set -euo pipefail
 echo "Pre-upgrade reboot complete. Continuing with ACFS installation..."
 
 # Fetch and run installer (will proceed with Ubuntu upgrade if needed)
-export ACFS_REF=${repo_ref}
-INSTALL_URL="${install_url}"
-INSTALL_ARGS=(${continue_args[*]:-})
+export ACFS_REF=${repo_ref_q}
+INSTALL_URL=${install_url_q}
+INSTALL_ARGS=(${continue_args_q})
 
 echo "Fetching installer: \${INSTALL_URL}"
 curl -fsSL "\${INSTALL_URL}" | bash -s -- "\${INSTALL_ARGS[@]}"

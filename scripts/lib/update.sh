@@ -781,25 +781,28 @@ update_stack() {
             if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
                 # Fetch and verify content first
                 local tmp_install
-                tmp_install=$(mktemp "${TMPDIR:-/tmp}/acfs-install-am.XXXXXX")
-
-                if verify_checksum "$url" "$expected_sha256" "$tool" > "$tmp_install"; then
-                    chmod +x "$tmp_install"
-
-                    local tmux_session="acfs-services"
-                    # Kill old session if exists
-                    tmux kill-session -t "$tmux_session" 2>/dev/null || true
-
-                    # Launch in tmux (tmux does not split a single string into argv)
-                    if run_cmd "MCP Agent Mail (tmux)" tmux new-session -d -s "$tmux_session" "$tmp_install" --dir "$HOME/mcp_agent_mail" --yes; then
-                        log_to_file "Started MCP Agent Mail update in tmux session: $tmux_session"
-                        [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}Update running in tmux session '$tmux_session'${NC}"
-                    fi
-
-                    # Cleanup happens when system tmp is cleaned
+                tmp_install=$(mktemp "${TMPDIR:-/tmp}/acfs-install-am.XXXXXX" 2>/dev/null) || tmp_install=""
+                if [[ -z "$tmp_install" ]]; then
+                    log_item "fail" "MCP Agent Mail" "failed to create temp file for verified installer"
                 else
-                    rm -f "$tmp_install"
-                    log_item "fail" "MCP Agent Mail" "verification failed"
+                    if verify_checksum "$url" "$expected_sha256" "$tool" > "$tmp_install"; then
+                        chmod +x "$tmp_install"
+
+                        local tmux_session="acfs-services"
+                        # Kill old session if exists
+                        tmux kill-session -t "$tmux_session" 2>/dev/null || true
+
+                        # Launch in tmux (tmux does not split a single string into argv)
+                        if run_cmd "MCP Agent Mail (tmux)" tmux new-session -d -s "$tmux_session" "$tmp_install" --dir "$HOME/mcp_agent_mail" --yes; then
+                            log_to_file "Started MCP Agent Mail update in tmux session: $tmux_session"
+                            [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}Update running in tmux session '$tmux_session'${NC}"
+                        fi
+
+                        # Cleanup happens when system tmp is cleaned
+                    else
+                        rm -f "$tmp_install"
+                        log_item "fail" "MCP Agent Mail" "verification failed"
+                    fi
                 fi
             else
                 log_item "fail" "MCP Agent Mail" "unknown installer URL/checksum"

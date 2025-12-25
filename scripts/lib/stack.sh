@@ -121,7 +121,6 @@ _stack_require_security() {
 _stack_run_installer() {
     local tool="$1"
     shift || true
-    local args="${*:-}"
 
     if ! _stack_require_security; then
         return 1
@@ -140,7 +139,18 @@ _stack_run_installer() {
         return 1
     fi
 
-    _stack_run_as_user "source '$STACK_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' '$tool' | bash -s -- ${args:-}"
+    local -a quoted_args=()
+    local arg
+    for arg in "$@"; do
+        quoted_args+=("$(printf '%q' "$arg")")
+    done
+
+    local cmd="source '$STACK_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$expected_sha256' '$tool' | bash -s --"
+    if [[ ${#quoted_args[@]} -gt 0 ]]; then
+        cmd+=" ${quoted_args[*]}"
+    fi
+
+    _stack_run_as_user "$cmd"
 }
 
 # Check if a stack tool is installed
@@ -214,12 +224,12 @@ install_mcp_agent_mail() {
     log_detail "Installing ${STACK_NAMES[$tool]}..."
 
     # MCP Agent Mail uses --yes for non-interactive install
-    local args=""
+    local -a args=()
     if ! _stack_is_interactive; then
-        args="--yes"
+        args+=(--yes)
     fi
 
-    if _stack_run_installer "$tool" "$args"; then
+    if _stack_run_installer "$tool" "${args[@]}"; then
         if _stack_is_installed "$tool"; then
             log_success "${STACK_NAMES[$tool]} installed"
             return 0
@@ -244,12 +254,12 @@ install_ubs() {
 
     # UBS uses --easy-mode for simplified setup
     # Also add --yes for non-interactive installs if needed by UBS installer
-    local args="--easy-mode"
+    local -a args=(--easy-mode)
     if ! _stack_is_interactive; then
-        args="$args --yes"
+        args+=(--yes)
     fi
 
-    if _stack_run_installer "$tool" "$args"; then
+    if _stack_run_installer "$tool" "${args[@]}"; then
         if _stack_is_installed "$tool"; then
             log_success "${STACK_NAMES[$tool]} installed"
             return 0
@@ -296,7 +306,7 @@ install_cass() {
     log_detail "Installing ${STACK_NAMES[$tool]}..."
 
     # CASS uses --easy-mode --verify for simplified setup with verification
-    if _stack_run_installer "$tool" "--easy-mode --verify"; then
+    if _stack_run_installer "$tool" --easy-mode --verify; then
         if _stack_is_installed "$tool"; then
             log_success "${STACK_NAMES[$tool]} installed"
             return 0
@@ -320,7 +330,7 @@ install_cm() {
     log_detail "Installing ${STACK_NAMES[$tool]}..."
 
     # CM uses --easy-mode --verify for simplified setup with verification
-    if _stack_run_installer "$tool" "--easy-mode --verify"; then
+    if _stack_run_installer "$tool" --easy-mode --verify; then
         if _stack_is_installed "$tool"; then
             log_success "${STACK_NAMES[$tool]} installed"
             return 0

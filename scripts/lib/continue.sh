@@ -96,9 +96,11 @@ get_state_value() {
     local key="$1"
     local state_file=""
 
-    state_file=$(select_state_file_for_key "$key") || return 1
+    # In set -e mode, failing command substitutions can abort the script.
+    # Treat missing state/jq as "no value" so callers can fall back gracefully.
+    state_file=$(select_state_file_for_key "$key") || { echo ""; return 0; }
 
-    command -v jq &>/dev/null || return 1
+    command -v jq &>/dev/null || { echo ""; return 0; }
 
     # Never crash on jq errors (schema drift / partial state files during boot).
     jq -r "$key" "$state_file" 2>/dev/null || true
