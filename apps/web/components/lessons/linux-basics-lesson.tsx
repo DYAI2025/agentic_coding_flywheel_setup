@@ -6,7 +6,6 @@ import {
   Eye,
   Move,
   Plus,
-  FileText,
   Trash2,
   Search,
   CheckCircle2,

@@ -99,6 +99,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     if (variant === "link" || disableMotion) {
       return (
         <button
+          type="button"
           ref={ref}
           className={cn(buttonVariants({ variant, size, className }))}
           {...(props as React.ComponentPropsWithoutRef<"button">)}
@@ -112,6 +113,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Using m.button (not motion.button) for LazyMotion compatibility
     return (
       <m.button
+        type="button"
         ref={ref}
         className={cn(buttonVariants({ variant, size, className }))}
         whileHover={{ scale: 1.02 }}

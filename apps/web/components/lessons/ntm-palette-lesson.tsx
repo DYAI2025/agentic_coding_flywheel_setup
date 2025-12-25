@@ -18,7 +18,6 @@ import {
   Section,
   Paragraph,
   CodeBlock,
-  TipBox,
   Highlight,
   Divider,
   GoalBanner,
