@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { getLessonComponent } from "@/components/lessons";
 import {
   ArrowLeft,
@@ -197,7 +197,7 @@ function LessonSidebar({
               {/* Timeline track */}
               <div className="absolute left-[34px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-primary/30 via-white/[0.08] to-emerald-500/30" />
 
-              {LESSONS.map((lesson, index) => {
+              {LESSONS.map((lesson) => {
                 const isCompleted = completedLessons.includes(lesson.id);
                 const isCurrent = lesson.id === currentLessonId;
 
@@ -305,10 +305,15 @@ export function LessonContent({ lesson }: Props) {
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   useEffect(() => {
+    const timeouts = timeoutsRef.current;
     return () => {
-      timeoutsRef.current.forEach(clearTimeout);
+      timeouts.forEach(clearTimeout);
     };
   }, []);
+
+  // Dynamic component selection based on lesson slug - this is a legitimate pattern
+  // for route-based content rendering. The component is stable per slug.
+  const LessonComponent = useMemo(() => getLessonComponent(lesson.slug), [lesson.slug]);
 
   const wizardStepSlugByLesson: Record<string, string> = {
     welcome: "launch-onboarding",
@@ -534,17 +539,14 @@ export function LessonContent({ lesson }: Props) {
 
               {/* Custom lesson content */}
               <article>
-                {(() => {
-                  const LessonComponent = getLessonComponent(lesson.slug);
-                  if (LessonComponent) {
-                    return <LessonComponent />;
-                  }
-                  return (
-                    <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-8 text-center">
-                      <p className="text-white/70">Lesson content not found for: {lesson.slug}</p>
-                    </div>
-                  );
-                })()}
+                {LessonComponent ? (
+                  // eslint-disable-next-line react-hooks/static-components
+                  <LessonComponent />
+                ) : (
+                  <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-8 text-center">
+                    <p className="text-white/70">Lesson content not found for: {lesson.slug}</p>
+                  </div>
+                )}
               </article>
 
               {/* Jaw-dropping completion card */}
