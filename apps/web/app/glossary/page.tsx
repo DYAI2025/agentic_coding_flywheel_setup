@@ -146,7 +146,12 @@ export default function GlossaryPage() {
       const raw = window.location.hash.replace(/^#/, "");
       if (!raw) return;
 
-      const key = decodeURIComponent(raw);
+      let key: string;
+      try {
+        key = decodeURIComponent(raw);
+      } catch {
+        return;
+      }
       const target = document.getElementById(key);
       if (!target) return;
 
