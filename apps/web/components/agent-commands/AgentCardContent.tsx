@@ -67,6 +67,7 @@ export function AgentCardContent({ agent, isExpanded }: AgentCardContentProps) {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setActiveTab(tab.id);
@@ -164,6 +165,7 @@ export function AgentCardContent({ agent, isExpanded }: AgentCardContentProps) {
                       {[agent.command, ...agent.aliases].map((alias, i) => (
                         <motion.button
                           key={alias}
+                          type="button"
                           onClick={() => handleCopy(alias)}
                           className={cn(
                             "group flex items-center justify-between gap-3 rounded-xl border p-4",

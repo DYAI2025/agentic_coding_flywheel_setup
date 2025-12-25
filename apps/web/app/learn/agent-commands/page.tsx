@@ -198,6 +198,7 @@ export default function AgentCommandsPage() {
           <div className="flex items-center gap-2">
             {/* Keyboard hints toggle - desktop only */}
             <button
+              type="button"
               onClick={() => setShowKeyboardHints((prev) => !prev)}
               className="hidden min-h-[48px] items-center gap-2 rounded-lg px-3 text-muted-foreground transition-colors hover:text-foreground lg:flex"
               aria-label="Toggle keyboard shortcuts"
@@ -258,6 +259,7 @@ export default function AgentCommandsPage() {
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery("")}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               aria-label="Clear search"
@@ -457,6 +459,7 @@ ntm send myproject "review and test your changes"`}
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Keyboard Shortcuts</h3>
                 <button
+                  type="button"
                   onClick={() => setShowKeyboardHints(false)}
                   className="rounded-lg p-2 text-muted-foreground hover:bg-muted"
                 >

@@ -125,6 +125,7 @@ export function AgentCarousel({
           return (
             <button
               key={agent.id}
+              type="button"
               onClick={() => onIndexChange(index)}
               aria-label={`Go to ${agent.name}`}
               className={cn(

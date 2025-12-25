@@ -68,6 +68,7 @@ export function QuickAccessBar() {
           return (
             <motion.button
               key={command.alias}
+              type="button"
               onClick={(e) => handleCopy(command, e)}
               className={cn(
                 "group relative flex flex-1 flex-col items-center gap-1.5 rounded-xl p-3",

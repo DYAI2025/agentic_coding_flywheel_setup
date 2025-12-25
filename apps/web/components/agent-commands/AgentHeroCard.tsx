@@ -202,6 +202,7 @@ export function AgentHeroCard({
         <div className="hidden items-center gap-3 sm:flex">
           {/* Primary alias badge */}
           <motion.button
+            type="button"
             onClick={(e) => handleCopy(agent.aliases[0] || agent.command, e)}
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2",
