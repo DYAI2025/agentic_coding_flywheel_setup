@@ -110,10 +110,10 @@ check_claude_status() {
         return
     fi
 
-    # Check for config indicating login
+    # Directory existence/content alone is not enough to indicate authentication.
+    # Require an actual config file.
     if user_file_exists "$TARGET_HOME/.claude/config.json" || \
-       user_file_exists "$TARGET_HOME/.config/claude/config.json" || \
-       user_dir_has_content "$TARGET_HOME/.claude"; then
+       user_file_exists "$TARGET_HOME/.config/claude/config.json"; then
         SERVICE_STATUS[claude]="configured"
     else
         SERVICE_STATUS[claude]="installed"
@@ -147,8 +147,8 @@ check_gemini_status() {
     fi
 
     # Check for credentials (OAuth web login, like Claude Code and Codex CLI)
+    # Directory existence/content alone is not enough - require actual credential files.
     if user_file_exists "$TARGET_HOME/.config/gemini/credentials.json" || \
-       user_dir_has_content "$TARGET_HOME/.config/gemini" || \
        user_file_exists "$TARGET_HOME/.gemini/config"; then
         SERVICE_STATUS[gemini]="configured"
     else
