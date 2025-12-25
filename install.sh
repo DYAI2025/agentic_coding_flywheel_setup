@@ -2208,7 +2208,11 @@ setup_shell() {
     if [[ -f "$user_zshrc" ]] && ! grep -q "^# ACFS loader" "$user_zshrc" 2>/dev/null; then
         local backup
         backup="$user_zshrc.pre-acfs.$(date +%Y%m%d%H%M%S)"
-        log_warn "Existing .zshrc found; backing up to $(basename "$backup")"
+        if [[ "${ACFS_CI:-false}" == "true" ]]; then
+            log_detail "Existing .zshrc found; backing up to $(basename "$backup")"
+        else
+            log_warn "Existing .zshrc found; backing up to $(basename "$backup")"
+        fi
         $SUDO cp "$user_zshrc" "$backup"
         $SUDO chown "$TARGET_USER:$TARGET_USER" "$backup" 2>/dev/null || true
     fi

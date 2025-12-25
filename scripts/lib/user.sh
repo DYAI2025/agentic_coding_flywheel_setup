@@ -128,7 +128,11 @@ migrate_ssh_keys() {
     fi
 
     if [[ -z "$source_keys" ]]; then
-        log_warn "No SSH keys found to migrate"
+        if [[ "${ACFS_CI:-false}" == "true" ]]; then
+            log_detail "No SSH keys found to migrate (CI)"
+        else
+            log_warn "No SSH keys found to migrate"
+        fi
         return 0
     fi
 
