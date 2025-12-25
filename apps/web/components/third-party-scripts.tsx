@@ -10,6 +10,8 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 // Note: GA4 is handled by AnalyticsProvider to avoid duplicate scripts
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
 const CLARITY_PROJECT_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
+// Only enable Vercel Analytics when explicitly configured (requires Vercel project config)
+const ENABLE_VERCEL_ANALYTICS = process.env.NEXT_PUBLIC_ENABLE_VERCEL_ANALYTICS === 'true';
 // Only enable Speed Insights when explicitly configured (requires Vercel Pro)
 const ENABLE_SPEED_INSIGHTS = process.env.NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS === 'true';
 
@@ -68,8 +70,8 @@ export function ThirdPartyScripts() {
         />
       )}
 
-      {/* Vercel Web Analytics - automatic pageview & event tracking */}
-      <Analytics />
+      {/* Vercel Web Analytics - automatic pageview & event tracking (requires Vercel project config) */}
+      {ENABLE_VERCEL_ANALYTICS && <Analytics />}
 
       {/* Vercel Speed Insights - Core Web Vitals monitoring (requires Vercel Pro) */}
       {ENABLE_SPEED_INSIGHTS && <SpeedInsights />}
