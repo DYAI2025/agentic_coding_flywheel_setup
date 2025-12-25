@@ -69,6 +69,14 @@ export function AgentCarousel({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore when input is focused (prevents conflict with search input cursor navigation)
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
       if (e.key === "ArrowLeft" && currentIndex > 0) {
         onIndexChange(currentIndex - 1);
       } else if (e.key === "ArrowRight" && currentIndex < agents.length - 1) {
