@@ -27,7 +27,8 @@ import {
   getCompletionPercentage,
   getNextUncompletedLesson,
 } from "@/lib/lessonProgress";
-import { backgrounds, springs, motionVariants } from "@/lib/design-tokens";
+import { backgrounds, springs } from "@/lib/design-tokens";
+import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 
 type LessonStatus = "completed" | "current" | "locked";
 
