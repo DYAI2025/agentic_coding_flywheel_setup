@@ -15,6 +15,8 @@ import {
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { CommandCard, CodeBlock } from "@/components/command-card";
+import { motion, springs, staggerContainer, fadeUp } from "@/components/motion";
+import { useScrollReveal } from "@/lib/hooks/useScrollReveal";
 
 type AgentType = "claude" | "codex" | "gemini";
 
@@ -256,6 +258,8 @@ function AgentCard({ agent }: { agent: AgentInfo }) {
 
 export default function AgentCommandsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { ref: heroRef, isInView: heroInView } = useScrollReveal({ threshold: 0.1 });
+  const { ref: contentRef, isInView: contentInView } = useScrollReveal({ threshold: 0.05 });
 
   const filteredAgents = agents.filter(
     (agent) =>
@@ -272,33 +276,46 @@ export default function AgentCommandsPage() {
       {/* Background effects */}
       <div className="pointer-events-none fixed inset-0 bg-gradient-cosmic opacity-50" />
       <div className="pointer-events-none fixed inset-0 bg-grid-pattern opacity-20" />
+      {/* Floating orbs - hidden on mobile for performance */}
+      <div className="pointer-events-none fixed -left-40 top-1/4 hidden h-80 w-80 rounded-full bg-[oklch(0.75_0.18_195/0.08)] blur-[100px] sm:block" />
+      <div className="pointer-events-none fixed -right-40 bottom-1/3 hidden h-80 w-80 rounded-full bg-[oklch(0.7_0.2_330/0.08)] blur-[100px] sm:block" />
 
       <div className="relative mx-auto max-w-4xl px-6 py-8 md:px-12 md:py-12">
-        {/* Header */}
+        {/* Header - 48px touch targets */}
         <div className="mb-8 flex items-center justify-between">
           <Link
             href="/learn"
-            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+            className="flex min-h-[48px] items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm">Learning Hub</span>
           </Link>
           <Link
             href="/"
-            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+            className="flex min-h-[48px] items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <Home className="h-4 w-4" />
             <span className="text-sm">Home</span>
           </Link>
         </div>
 
-        {/* Hero */}
-        <div className="mb-10 text-center">
-          <div className="mb-4 flex justify-center">
+        {/* Hero with animation */}
+        <motion.div
+          ref={heroRef as React.RefObject<HTMLDivElement>}
+          className="mb-10 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={springs.smooth}
+        >
+          <motion.div
+            className="mb-4 flex justify-center"
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            transition={springs.snappy}
+          >
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 shadow-lg shadow-primary/20">
               <Terminal className="h-8 w-8 text-primary" />
             </div>
-          </div>
+          </motion.div>
           <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-4xl">
             Agent Commands
           </h1>
@@ -306,7 +323,7 @@ export default function AgentCommandsPage() {
             Quick reference for Claude Code, Codex CLI, and Gemini CLI. Copy
             commands and learn best practices for each agent.
           </p>
-        </div>
+        </motion.div>
 
         {/* Search */}
         <div className="relative mb-8">
@@ -351,21 +368,39 @@ export default function AgentCommandsPage() {
           </div>
         </Card>
 
-        {/* Agent cards */}
-        <div className="space-y-8">
+        {/* Agent cards with stagger animation */}
+        <motion.div
+          ref={contentRef as React.RefObject<HTMLDivElement>}
+          className="space-y-8"
+          initial="hidden"
+          animate={contentInView ? "visible" : "hidden"}
+          variants={staggerContainer}
+        >
           {filteredAgents.length > 0 ? (
             filteredAgents.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} />
+              <motion.div
+                key={agent.id}
+                variants={fadeUp}
+                whileHover={{ y: -4, boxShadow: "0 20px 40px -15px oklch(0.75 0.18 195 / 0.15)" }}
+                transition={springs.snappy}
+              >
+                <AgentCard agent={agent} />
+              </motion.div>
             ))
           ) : (
-            <div className="py-12 text-center">
+            <motion.div
+              className="py-12 text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={springs.smooth}
+            >
               <Search className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
               <p className="text-muted-foreground">
                 No agents match your search.
               </p>
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
 
         {/* Multi-agent workflow */}
         <Card className="mt-10 p-6">
