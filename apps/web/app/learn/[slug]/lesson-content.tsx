@@ -101,9 +101,6 @@ function LessonSidebar({
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.08] via-transparent to-emerald-500/[0.05]" />
 
-        {/* Noise texture */}
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02]" />
-
         {/* Border */}
         <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-white/[0.15] via-white/[0.08] to-white/[0.15]" />
 

@@ -226,9 +226,6 @@ export default function LearnDashboard() {
         <div className="absolute left-1/2 top-1/3 h-[400px] w-[400px] -translate-x-1/2 rounded-full bg-violet-500/4 blur-[100px]" />
       </div>
 
-      {/* Noise texture overlay */}
-      <div className="pointer-events-none fixed inset-0 bg-[url('/noise.png')] opacity-[0.015]" />
-
       <div className="relative mx-auto max-w-6xl px-4 py-6 sm:px-6 md:px-8 lg:px-12 lg:py-10">
         {/* Header navigation */}
         <motion.header
