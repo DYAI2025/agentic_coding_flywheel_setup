@@ -138,7 +138,7 @@ is_critical_tool() {
 
     # Normalize tool name (lowercase, strip common suffixes)
     # Using tr for portability (works in bash 3.x and zsh)
-    tool="$(echo "$tool" | tr '[:upper:]' '[:lower:]')"
+    tool="$(printf '%s' "$tool" | tr '[:upper:]' '[:lower:]')"
     tool="${tool%-cli}"  # strip -cli suffix
     tool="${tool%_cli}"  # strip _cli suffix
 
@@ -166,7 +166,7 @@ is_recommended_tool() {
 
     # Normalize tool name (lowercase, strip common suffixes)
     # Using tr for portability (works in bash 3.x and zsh)
-    tool="$(echo "$tool" | tr '[:upper:]' '[:lower:]')"
+    tool="$(printf '%s' "$tool" | tr '[:upper:]' '[:lower:]')"
     tool="${tool%-cli}"
     tool="${tool%_cli}"
 

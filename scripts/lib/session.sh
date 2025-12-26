@@ -391,14 +391,14 @@ JQ_EOF
     jq_filter="${jq_filter/##OPTIONAL##/$optional_filters}"
 
     if ! jq "$jq_filter" "$file" > "$tmpfile"; then
-        rm -f "$tmpfile" 2>/dev/null || true
+        rm -f -- "$tmpfile" 2>/dev/null || true
         log_error "Failed to sanitize session export"
         return 1
     fi
 
     # Atomic replace
-    if ! mv "$tmpfile" "$file"; then
-        rm -f "$tmpfile" 2>/dev/null || true
+    if ! mv -- "$tmpfile" "$file"; then
+        rm -f -- "$tmpfile" 2>/dev/null || true
         log_error "Failed to write sanitized session export"
         return 1
     fi
@@ -412,7 +412,7 @@ contains_secrets() {
     local content="$1"
 
     for pattern in "${REDACT_PATTERNS[@]}"; do
-        if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
+        if printf '%s' "$content" | grep -qE "$pattern" 2>/dev/null; then
             return 0
         fi
     done
@@ -629,10 +629,10 @@ export_session() {
             exported=$(cat "$tmpfile")
         else
             log_error "Sanitization failed; refusing to output unsanitized export"
-            rm -f "$tmpfile" 2>/dev/null || true
+            rm -f -- "$tmpfile" 2>/dev/null || true
             return 1
         fi
-        rm -f "$tmpfile" 2>/dev/null || true
+        rm -f -- "$tmpfile" 2>/dev/null || true
     elif [[ "$sanitize" == "true" && "$format" != "json" ]]; then
         # For non-JSON formats, apply text sanitization
         if ! exported=$(sanitize_content "$exported"); then
@@ -646,7 +646,7 @@ export_session() {
         printf '%s' "$exported" > "$output_file"
         log_success "Exported to: $output_file"
     else
-        echo "$exported"
+        printf '%s\n' "$exported"
     fi
 }
 
@@ -841,7 +841,7 @@ import_session() {
     if [[ "$is_cass" == "true" ]]; then
         convert_to_acfs_schema "$file" > "$dest"
     else
-        cp "$file" "$dest"
+        cp -- "$file" "$dest"
     fi
 
     echo ""
