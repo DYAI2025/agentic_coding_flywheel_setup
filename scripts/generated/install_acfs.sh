@@ -60,7 +60,7 @@ acfs_security_init() {
 }
 
 # Category: acfs
-# Modules: 3
+# Modules: 4
 
 # Agent workspace with tmux session and project folder
 install_acfs_workspace() {
@@ -247,6 +247,60 @@ INSTALL_ACFS_ONBOARD
     log_success "acfs.onboard installed"
 }
 
+# ACFS update command wrapper
+install_acfs_update() {
+    local module_id="acfs.update"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing acfs.update"
+
+    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+        log_info "dry-run: install: mkdir -p ~/.local/bin (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_ACFS_UPDATE'
+mkdir -p ~/.local/bin
+INSTALL_ACFS_UPDATE
+        then
+            log_error "acfs.update: install command failed: mkdir -p ~/.local/bin"
+            return 1
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+        log_info "dry-run: install: # Install acfs-update wrapper (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_ACFS_UPDATE'
+# Install acfs-update wrapper
+if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -f "${ACFS_BOOTSTRAP_DIR}/scripts/acfs-update" ]]; then
+  cp "${ACFS_BOOTSTRAP_DIR}/scripts/acfs-update" ~/.local/bin/acfs-update
+elif [[ -f "scripts/acfs-update" ]]; then
+  cp "scripts/acfs-update" ~/.local/bin/acfs-update
+else
+  ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
+  curl -fsSL "${ACFS_RAW}/scripts/acfs-update" -o ~/.local/bin/acfs-update
+fi
+chmod +x ~/.local/bin/acfs-update
+INSTALL_ACFS_UPDATE
+        then
+            log_error "acfs.update: install command failed: # Install acfs-update wrapper"
+            return 1
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+        log_info "dry-run: verify: command -v acfs-update (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_ACFS_UPDATE'
+command -v acfs-update
+INSTALL_ACFS_UPDATE
+        then
+            log_error "acfs.update: verify failed: command -v acfs-update"
+            return 1
+        fi
+    fi
+
+    log_success "acfs.update installed"
+}
+
 # ACFS doctor command for health checks
 install_acfs_doctor() {
     local module_id="acfs.doctor"
@@ -265,22 +319,22 @@ INSTALL_ACFS_DOCTOR
         fi
     fi
     if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: # Install acfs wrapper (target_user)"
+        log_info "dry-run: install: # Install acfs CLI (doctor.sh entrypoint) (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_ACFS_DOCTOR'
-# Install acfs wrapper
-if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -f "${ACFS_BOOTSTRAP_DIR}/scripts/acfs-update" ]]; then
-  cp "${ACFS_BOOTSTRAP_DIR}/scripts/acfs-update" ~/.local/bin/acfs
-elif [[ -f "scripts/acfs-update" ]]; then
-  cp "scripts/acfs-update" ~/.local/bin/acfs
+# Install acfs CLI (doctor.sh entrypoint)
+if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -f "${ACFS_BOOTSTRAP_DIR}/scripts/lib/doctor.sh" ]]; then
+  cp "${ACFS_BOOTSTRAP_DIR}/scripts/lib/doctor.sh" ~/.local/bin/acfs
+elif [[ -f "scripts/lib/doctor.sh" ]]; then
+  cp "scripts/lib/doctor.sh" ~/.local/bin/acfs
 else
   ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
-  curl -fsSL "${ACFS_RAW}/scripts/acfs-update" -o ~/.local/bin/acfs
+  curl -fsSL "${ACFS_RAW}/scripts/lib/doctor.sh" -o ~/.local/bin/acfs
 fi
 chmod +x ~/.local/bin/acfs
 INSTALL_ACFS_DOCTOR
         then
-            log_error "acfs.doctor: install command failed: # Install acfs wrapper"
+            log_error "acfs.doctor: install command failed: # Install acfs CLI (doctor.sh entrypoint)"
             return 1
         fi
     fi
@@ -306,6 +360,7 @@ install_acfs() {
     log_section "Installing acfs modules"
     install_acfs_workspace
     install_acfs_onboard
+    install_acfs_update
     install_acfs_doctor
 }
 

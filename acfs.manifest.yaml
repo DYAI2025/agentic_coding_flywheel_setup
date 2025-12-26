@@ -952,6 +952,33 @@ modules:
     verify:
       - onboard --help || command -v onboard
 
+  - id: acfs.update
+    description: ACFS update command wrapper
+    category: acfs
+    phase: 10
+    run_as: target_user
+    optional: false
+    enabled_by_default: true
+    generated: false
+    tags: [orchestration]
+    notes:
+      - "Install acfs-update script to ~/.local/bin/acfs-update"
+    install:
+      - mkdir -p ~/.local/bin
+      - |
+        # Install acfs-update wrapper
+        if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -f "${ACFS_BOOTSTRAP_DIR}/scripts/acfs-update" ]]; then
+          cp "${ACFS_BOOTSTRAP_DIR}/scripts/acfs-update" ~/.local/bin/acfs-update
+        elif [[ -f "scripts/acfs-update" ]]; then
+          cp "scripts/acfs-update" ~/.local/bin/acfs-update
+        else
+          ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
+          curl -fsSL "${ACFS_RAW}/scripts/acfs-update" -o ~/.local/bin/acfs-update
+        fi
+        chmod +x ~/.local/bin/acfs-update
+    verify:
+      - command -v acfs-update
+
   - id: acfs.doctor
     description: ACFS doctor command for health checks
     category: acfs
@@ -966,14 +993,14 @@ modules:
     install:
       - mkdir -p ~/.local/bin
       - |
-        # Install acfs wrapper
-        if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -f "${ACFS_BOOTSTRAP_DIR}/scripts/acfs-update" ]]; then
-          cp "${ACFS_BOOTSTRAP_DIR}/scripts/acfs-update" ~/.local/bin/acfs
-        elif [[ -f "scripts/acfs-update" ]]; then
-          cp "scripts/acfs-update" ~/.local/bin/acfs
+        # Install acfs CLI (doctor.sh entrypoint)
+        if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -f "${ACFS_BOOTSTRAP_DIR}/scripts/lib/doctor.sh" ]]; then
+          cp "${ACFS_BOOTSTRAP_DIR}/scripts/lib/doctor.sh" ~/.local/bin/acfs
+        elif [[ -f "scripts/lib/doctor.sh" ]]; then
+          cp "scripts/lib/doctor.sh" ~/.local/bin/acfs
         else
           ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
-          curl -fsSL "${ACFS_RAW}/scripts/acfs-update" -o ~/.local/bin/acfs
+          curl -fsSL "${ACFS_RAW}/scripts/lib/doctor.sh" -o ~/.local/bin/acfs
         fi
         chmod +x ~/.local/bin/acfs
     verify:

@@ -6,7 +6,7 @@
 # ============================================================
 # Data-only manifest index. Safe to source.
 
-ACFS_MANIFEST_SHA256="9e316cc0a0a7a790d428f92cfb7a79cef1fe95c4535e25fd6a20851564fc1f23"
+ACFS_MANIFEST_SHA256="f15181aab1ef8ecb29c8210150e8db841dd25e77bc1502339581d2ecf75155ef"
 
 ACFS_MODULES_IN_ORDER=(
   "base.system"
@@ -42,6 +42,7 @@ ACFS_MODULES_IN_ORDER=(
   "stack.slb"
   "acfs.workspace"
   "acfs.onboard"
+  "acfs.update"
   "acfs.doctor"
 )
 
@@ -79,6 +80,7 @@ declare -gA ACFS_MODULE_PHASE=(
   [stack.slb]="9"
   [acfs.workspace]="10"
   [acfs.onboard]="10"
+  [acfs.update]="10"
   [acfs.doctor]="10"
 )
 
@@ -116,6 +118,7 @@ declare -gA ACFS_MODULE_DEPS=(
   [stack.slb]="lang.go"
   [acfs.workspace]="agents.claude,agents.codex,agents.gemini,cli.modern"
   [acfs.onboard]=""
+  [acfs.update]=""
   [acfs.doctor]=""
 )
 
@@ -153,6 +156,7 @@ declare -gA ACFS_MODULE_FUNC=(
   [stack.slb]="install_stack_slb"
   [acfs.workspace]="install_acfs_workspace"
   [acfs.onboard]="install_acfs_onboard"
+  [acfs.update]="install_acfs_update"
   [acfs.doctor]="install_acfs_doctor"
 )
 
@@ -190,6 +194,7 @@ declare -gA ACFS_MODULE_CATEGORY=(
   [stack.slb]="stack"
   [acfs.workspace]="acfs"
   [acfs.onboard]="acfs"
+  [acfs.update]="acfs"
   [acfs.doctor]="acfs"
 )
 
@@ -227,6 +232,7 @@ declare -gA ACFS_MODULE_TAGS=(
   [stack.slb]="optional"
   [acfs.workspace]="workspace,agents"
   [acfs.onboard]="orchestration"
+  [acfs.update]="orchestration"
   [acfs.doctor]="orchestration"
 )
 
@@ -264,6 +270,7 @@ declare -gA ACFS_MODULE_DEFAULT=(
   [stack.slb]="1"
   [acfs.workspace]="1"
   [acfs.onboard]="1"
+  [acfs.update]="1"
   [acfs.doctor]="1"
 )
 
