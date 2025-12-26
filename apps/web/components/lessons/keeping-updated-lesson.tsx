@@ -218,10 +218,10 @@ sudo dpkg --configure -a`}
 claude update
 
 # Codex
-bun add -g --trust @openai/codex@latest
+bun install -g --trust @openai/codex@latest
 
 # Gemini
-bun add -g --trust @google/gemini-cli@latest`}
+bun install -g --trust @google/gemini-cli@latest`}
           />
 
           <TroubleshootingCard
