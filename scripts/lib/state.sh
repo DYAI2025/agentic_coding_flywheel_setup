@@ -532,25 +532,23 @@ state_phase_fail() {
 state_phase_skip() {
     local phase_id="$1"
 
-    if ! command -v jq &>/dev/null; then
-        return 1
-    fi
+    # Best-effort: never abort the installer if we can't persist skip metadata.
+    command -v jq &>/dev/null || return 0
 
     local state
-    state=$(state_load) || return 1
+    state=$(state_load 2>/dev/null) || return 0
 
     local new_state
-    if ! new_state=$(echo "$state" | jq --arg phase "$phase_id" '
+    new_state=$(echo "$state" | jq --arg phase "$phase_id" '
         # Preserve insertion order while preventing duplicates.
         .skipped_phases = (
           (.skipped_phases // []) as $phases |
           if ($phases | index($phase)) == null then $phases + [$phase] else $phases end
         )
-    '); then
-        return 1
-    fi
+    ' 2>/dev/null) || return 0
 
-    state_save "$new_state"
+    state_save "$new_state" 2>/dev/null || true
+    return 0
 }
 
 # Mark a tool as skipped
@@ -558,25 +556,23 @@ state_phase_skip() {
 state_tool_skip() {
     local tool="$1"
 
-    if ! command -v jq &>/dev/null; then
-        return 1
-    fi
+    # Best-effort: never abort the installer if we can't persist skip metadata.
+    command -v jq &>/dev/null || return 0
 
     local state
-    state=$(state_load) || return 1
+    state=$(state_load 2>/dev/null) || return 0
 
     local new_state
-    if ! new_state=$(echo "$state" | jq --arg tool "$tool" '
+    new_state=$(echo "$state" | jq --arg tool "$tool" '
         # Preserve insertion order while preventing duplicates.
         .skipped_tools = (
           (.skipped_tools // []) as $tools |
           if ($tools | index($tool)) == null then $tools + [$tool] else $tools end
         )
-    '); then
-        return 1
-    fi
+    ' 2>/dev/null) || return 0
 
-    state_save "$new_state"
+    state_save "$new_state" 2>/dev/null || true
+    return 0
 }
 
 # ============================================================
