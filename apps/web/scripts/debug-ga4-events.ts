@@ -11,23 +11,28 @@ const client = new BetaAnalyticsDataClient();
 async function listAllEvents(): Promise<void> {
   console.log('\n📋 All Events (Last 30 Days):\n');
 
-  const [response] = await client.runReport({
-    property: `properties/${PROPERTY_ID}`,
-    dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
-    dimensions: [{ name: 'eventName' }],
-    metrics: [{ name: 'eventCount' }, { name: 'activeUsers' }],
-    orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }],
-    limit: 50,
-  });
+  try {
+    const [response] = await client.runReport({
+      property: `properties/${PROPERTY_ID}`,
+      dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+      dimensions: [{ name: 'eventName' }],
+      metrics: [{ name: 'eventCount' }, { name: 'activeUsers' }],
+      orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }],
+      limit: 50,
+    });
 
-  console.log('  Event Name                    Count    Users');
-  console.log('  ' + '─'.repeat(50));
+    console.log('  Event Name                    Count    Users');
+    console.log('  ' + '─'.repeat(50));
 
-  for (const row of response.rows || []) {
-    const name = row.dimensionValues?.[0]?.value || '';
-    const count = row.metricValues?.[0]?.value || '0';
-    const users = row.metricValues?.[1]?.value || '0';
-    console.log(`  ${name.padEnd(30)} ${count.padStart(6)}    ${users.padStart(5)}`);
+    for (const row of response.rows || []) {
+      const name = row.dimensionValues?.[0]?.value || '';
+      const count = row.metricValues?.[0]?.value || '0';
+      const users = row.metricValues?.[1]?.value || '0';
+      console.log(`  ${name.padEnd(30)} ${count.padStart(6)}    ${users.padStart(5)}`);
+    }
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`  ❌ Error listing events: ${msg}`);
   }
 }
 
@@ -115,23 +120,28 @@ async function checkFunnelEvents(): Promise<void> {
 async function checkPageViews(): Promise<void> {
   console.log('\n📄 Page Views by Path:\n');
 
-  const [response] = await client.runReport({
-    property: `properties/${PROPERTY_ID}`,
-    dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
-    dimensions: [{ name: 'pagePath' }],
-    metrics: [{ name: 'screenPageViews' }, { name: 'activeUsers' }],
-    orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
-    limit: 20,
-  });
+  try {
+    const [response] = await client.runReport({
+      property: `properties/${PROPERTY_ID}`,
+      dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+      dimensions: [{ name: 'pagePath' }],
+      metrics: [{ name: 'screenPageViews' }, { name: 'activeUsers' }],
+      orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
+      limit: 20,
+    });
 
-  console.log('  Path                                      Views   Users');
-  console.log('  ' + '─'.repeat(55));
+    console.log('  Path                                      Views   Users');
+    console.log('  ' + '─'.repeat(55));
 
-  for (const row of response.rows || []) {
-    const path = row.dimensionValues?.[0]?.value || '';
-    const views = row.metricValues?.[0]?.value || '0';
-    const users = row.metricValues?.[1]?.value || '0';
-    console.log(`  ${path.padEnd(40).slice(0, 40)} ${views.padStart(6)}  ${users.padStart(6)}`);
+    for (const row of response.rows || []) {
+      const path = row.dimensionValues?.[0]?.value || '';
+      const views = row.metricValues?.[0]?.value || '0';
+      const users = row.metricValues?.[1]?.value || '0';
+      console.log(`  ${path.padEnd(40).slice(0, 40)} ${views.padStart(6)}  ${users.padStart(6)}`);
+    }
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`  ❌ Error checking page views: ${msg}`);
   }
 }
 

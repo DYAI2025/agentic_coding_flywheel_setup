@@ -70,7 +70,7 @@ const CUSTOM_DIMENSIONS = [
 
   // Time tracking
   { name: 'time_from_previous_step_seconds', scope: 'EVENT', description: 'Seconds since previous step' },
-  { name: 'time_on_step_seconds', scope: 'EVENT', description: 'Seconds spent on this step' },
+  // Note: time_on_step_seconds is defined as a metric (not dimension) since it's a numeric value
 ];
 
 // Custom metrics to create

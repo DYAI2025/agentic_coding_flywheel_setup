@@ -21,6 +21,19 @@ interface FunnelStep {
   dropoffRate?: number;
 }
 
+/**
+ * Safely parse a GA4 dimension value to integer.
+ * GA4 can return "(not set)" for dimensions without values.
+ * Returns null for invalid/missing values instead of NaN.
+ */
+function safeParseInt(value: string | undefined | null): number | null {
+  if (!value || value === '(not set)' || value === '(other)') {
+    return null;
+  }
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? null : parsed;
+}
+
 async function queryWizardFunnel(): Promise<FunnelStep[]> {
   console.log('\n📊 Querying Wizard Funnel Data...\n');
 
@@ -55,11 +68,12 @@ async function queryWizardFunnel(): Promise<FunnelStep[]> {
 
     if (response.rows) {
       for (const row of response.rows) {
-        const stepNum = parseInt(row.dimensionValues?.[0]?.value || '0', 10);
+        const stepNum = safeParseInt(row.dimensionValues?.[0]?.value);
         const users = parseInt(row.metricValues?.[0]?.value || '0', 10);
         const events = parseInt(row.metricValues?.[1]?.value || '0', 10);
 
-        if (stepNum > 0 && stepNum <= 13) {
+        // Skip invalid step numbers (null from "(not set)" or out of range)
+        if (stepNum !== null && stepNum > 0 && stepNum <= 13) {
           steps.push({ step: stepNum, users, events });
         }
       }
@@ -118,11 +132,12 @@ async function queryLessonFunnel(): Promise<FunnelStep[]> {
 
     if (response.rows) {
       for (const row of response.rows) {
-        const lessonId = parseInt(row.dimensionValues?.[0]?.value || '0', 10);
+        const lessonId = safeParseInt(row.dimensionValues?.[0]?.value);
         const users = parseInt(row.metricValues?.[0]?.value || '0', 10);
         const events = parseInt(row.metricValues?.[1]?.value || '0', 10);
 
-        if (lessonId >= 0 && lessonId < 20) {
+        // Skip invalid lesson IDs (null from "(not set)" or out of range)
+        if (lessonId !== null && lessonId >= 0 && lessonId < 20) {
           steps.push({ step: lessonId, users, events });
         }
       }
@@ -231,7 +246,7 @@ async function queryConversions(): Promise<void> {
   }
 }
 
-function printFunnelChart(steps: FunnelStep[], title: string, maxSteps: number): void {
+function printFunnelChart(steps: FunnelStep[], title: string, maxSteps: number, startAt: number = 1): void {
   if (steps.length === 0) {
     console.log(`  No data available for ${title}`);
     return;
@@ -245,7 +260,8 @@ function printFunnelChart(steps: FunnelStep[], title: string, maxSteps: number):
   console.log('  Step   Users    Drop-off   Funnel');
   console.log('  ─'.repeat(35));
 
-  for (let i = 1; i <= maxSteps; i++) {
+  const endAt = startAt + maxSteps;
+  for (let i = startAt; i < endAt; i++) {
     const step = steps.find(s => s.step === i);
     const users = step?.users || 0;
     const dropoff = step?.dropoffRate;
@@ -261,8 +277,8 @@ function printFunnelChart(steps: FunnelStep[], title: string, maxSteps: number):
   }
 
   // Summary stats
-  const firstStep = steps.find(s => s.step === 1);
-  const lastStep = steps.find(s => s.step === maxSteps);
+  const firstStep = steps.find(s => s.step === startAt);
+  const lastStep = steps.find(s => s.step === endAt - 1);
   if (firstStep && lastStep) {
     const overallConversion = firstStep.users > 0
       ? ((lastStep.users / firstStep.users) * 100).toFixed(1)
@@ -286,13 +302,13 @@ async function main() {
     // Query conversions
     await queryConversions();
 
-    // Query and display wizard funnel
+    // Query and display wizard funnel (steps 1-13)
     const wizardSteps = await queryWizardFunnel();
-    printFunnelChart(wizardSteps, 'Wizard Funnel (13 Steps)', 13);
+    printFunnelChart(wizardSteps, 'Wizard Funnel (13 Steps)', 13, 1);
 
-    // Query and display lesson funnel
+    // Query and display lesson funnel (lessons 0-19)
     const lessonSteps = await queryLessonFunnel();
-    printFunnelChart(lessonSteps, 'Learning Hub Funnel (20 Lessons)', 20);
+    printFunnelChart(lessonSteps, 'Learning Hub Funnel (20 Lessons)', 20, 0);
 
     console.log('\n═'.repeat(60));
     console.log('✅ Report complete!');
