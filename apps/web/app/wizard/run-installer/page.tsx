@@ -112,12 +112,10 @@ export default function RunInstallerPage() {
             <strong>Early in the installation</strong>, you&apos;ll see a prompt asking for your SSH public key:
           </p>
           <OutputPreview title="You'll see something like:" className="my-3">
-            <div className="space-y-1">
-              <p className="text-muted-foreground">╔════════════════════════════════╗</p>
-              <p className="text-muted-foreground">║  SSH Key Setup                 ║</p>
-              <p className="text-muted-foreground">╚════════════════════════════════╝</p>
-              <p className="text-[oklch(0.78_0.16_75)]">Paste your public key: <span className="animate-pulse">_</span></p>
-            </div>
+            <pre className="text-muted-foreground whitespace-pre">{`════════════════════════════════════════
+  SSH Key Setup
+════════════════════════════════════════`}</pre>
+            <p className="text-[oklch(0.78_0.16_75)] mt-2">Paste your public key: <span className="animate-pulse">_</span></p>
           </OutputPreview>
           <p>
             <strong className="text-foreground">This is when you paste the key you saved earlier!</strong>{" "}
