@@ -182,7 +182,6 @@ fi
 
 # Show installation completion message
 # Usage: show_completion $total_phases $total_seconds
-# NOTE: Phases line assumes single-digit phase numbers (1-9). ACFS has 9 phases.
 if ! declare -f show_completion >/dev/null; then
     show_completion() {
         local total="$1"
