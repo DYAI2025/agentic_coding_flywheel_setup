@@ -370,13 +370,43 @@ update_require_security() {
         return 0
     fi
 
-    if [[ ! -f "$SCRIPT_DIR/security.sh" ]]; then
+    # Check for security.sh in expected locations
+    local security_script=""
+    if [[ -f "$SCRIPT_DIR/security.sh" ]]; then
+        security_script="$SCRIPT_DIR/security.sh"
+    elif [[ -f "$HOME/.acfs/scripts/lib/security.sh" ]]; then
+        security_script="$HOME/.acfs/scripts/lib/security.sh"
+    fi
+
+    if [[ -z "$security_script" ]]; then
+        echo "" >&2
+        echo "═══════════════════════════════════════════════════════════════" >&2
+        echo "  ERROR: security.sh not found" >&2
+        echo "═══════════════════════════════════════════════════════════════" >&2
+        echo "" >&2
+        echo "  The security verification script is missing." >&2
+        echo "  This is required for --stack updates." >&2
+        echo "" >&2
+        echo "  Checked locations:" >&2
+        echo "    - $SCRIPT_DIR/security.sh" >&2
+        echo "    - $HOME/.acfs/scripts/lib/security.sh" >&2
+        echo "" >&2
+        echo "  This usually means:" >&2
+        echo "    1. You have an older ACFS installation, OR" >&2
+        echo "    2. The installation didn't complete fully" >&2
+        echo "" >&2
+        echo "  TO FIX: Re-run the ACFS installer:" >&2
+        echo "" >&2
+        echo "    curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes" >&2
+        echo "" >&2
+        echo "═══════════════════════════════════════════════════════════════" >&2
+        echo "" >&2
         return 1
     fi
 
     # shellcheck source=security.sh
     # shellcheck disable=SC1091  # runtime relative source
-    source "$SCRIPT_DIR/security.sh"
+    source "$security_script"
     load_checksums || return 1
 
     UPDATE_SECURITY_READY=true
