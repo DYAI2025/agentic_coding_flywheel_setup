@@ -616,13 +616,13 @@ EOF
               if ( [ .hooks.PreToolUse[]? | .hooks[]? | select(.type=="command") | .command ] | index($cmd) ) != null then
                 .
               else
-                ( [ .hooks.PreToolUse | to_entries[] | select(.value.matcher=="Bash") | .key ] | first ) as $bashKey |
-                if $bashKey == null then
-                  .hooks.PreToolUse += [{ "matcher":"Bash", "hooks":[ { "type":"command", "command":$cmd } ] }]
-                else
-                  .hooks.PreToolUse[$bashKey].hooks = ((.hooks.PreToolUse[$bashKey].hooks // []) | if type=="array" then . else [] end) |
-                  .hooks.PreToolUse[$bashKey].hooks += [{ "type":"command", "command":$cmd }]
-                end
+	                ( [ .hooks.PreToolUse | to_entries[] | select(.value.matcher=="Bash") | (.key | tonumber) ] | first ) as $bashKey |
+	                if $bashKey == null then
+	                  .hooks.PreToolUse += [{ "matcher":"Bash", "hooks":[ { "type":"command", "command":$cmd } ] }]
+	                else
+	                  .hooks.PreToolUse[$bashKey].hooks = ((.hooks.PreToolUse[$bashKey].hooks // []) | if type=="array" then . else [] end) |
+	                  .hooks.PreToolUse[$bashKey].hooks += [{ "type":"command", "command":$cmd }]
+	                end
               end
             ' "$settings_file" > "$tmp" 2>/dev/null; then
                 mv -- "$tmp" "$settings_file" 2>/dev/null || {
