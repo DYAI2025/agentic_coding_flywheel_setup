@@ -1435,6 +1435,7 @@ run_as_target() {
 declare -A ACFS_UPSTREAM_URLS=()
 declare -A ACFS_UPSTREAM_SHA256=()
 ACFS_UPSTREAM_LOADED=false
+ACFS_CHECKSUMS_SOURCE=""  # Tracks where checksums were loaded from (bootstrap, local, github-api, raw-cdn)
 
 acfs_calculate_sha256() {
     if command_exists sha256sum; then
@@ -1495,35 +1496,46 @@ acfs_fetch_url_content() {
     return 1
 }
 
-acfs_load_upstream_checksums() {
-    if [[ "$ACFS_UPSTREAM_LOADED" == "true" ]]; then
-        return 0
+# Fetch checksums.yaml directly via GitHub API (bypasses CDN caching entirely).
+# This is used as a fallback when cached checksums don't match upstream.
+# Uses the raw content header to get the file directly without base64 encoding.
+acfs_fetch_fresh_checksums_via_api() {
+    local api_url="https://api.github.com/repos/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/contents/checksums.yaml?ref=${ACFS_REF}"
+
+    # Use application/vnd.github.raw to get raw file content directly (no base64)
+    local content
+    content="$(curl -fsSL \
+        -H "Accept: application/vnd.github.raw" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "$api_url" 2>/dev/null)" || {
+        log_detail "GitHub API request failed for checksums.yaml"
+        return 1
+    }
+
+    if [[ -z "$content" ]]; then
+        log_detail "Empty content from GitHub API"
+        return 1
     fi
 
-    local content=""
-    local checksums_file=""
-    if [[ -n "${ACFS_CHECKSUMS_YAML:-}" ]] && [[ -r "$ACFS_CHECKSUMS_YAML" ]]; then
-        checksums_file="$ACFS_CHECKSUMS_YAML"
-    elif [[ -n "${SCRIPT_DIR:-}" ]] && [[ -r "$SCRIPT_DIR/checksums.yaml" ]]; then
-        checksums_file="$SCRIPT_DIR/checksums.yaml"
-    elif [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -r "$ACFS_BOOTSTRAP_DIR/checksums.yaml" ]]; then
-        checksums_file="$ACFS_BOOTSTRAP_DIR/checksums.yaml"
+    # Verify it looks like valid checksums.yaml (should start with a comment or "installers:")
+    if [[ ! "$content" =~ ^[[:space:]]*(#|installers:) ]]; then
+        log_detail "GitHub API returned unexpected content format"
+        return 1
     fi
 
-    if [[ -n "$checksums_file" ]]; then
-        content="$(cat "$checksums_file")"
-    else
-        # Cache-bust to ensure we get the latest checksums.yaml
-        local cb
-        cb="$(date +%s)"
-        content="$(acfs_fetch_url_content "$ACFS_RAW/checksums.yaml?cb=${cb}")" || {
-            log_error "Failed to fetch checksums.yaml from $ACFS_RAW"
-            return 1
-        }
-    fi
+    printf '%s' "$content"
+}
 
+# Parse checksums.yaml content into associative arrays.
+# Takes YAML content as argument, populates ACFS_UPSTREAM_URLS and ACFS_UPSTREAM_SHA256.
+acfs_parse_checksums_content() {
+    local content="$1"
     local in_installers=false
     local current_tool=""
+
+    # Clear existing entries for fresh parse
+    ACFS_UPSTREAM_URLS=()
+    ACFS_UPSTREAM_SHA256=()
 
     while IFS= read -r line; do
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
@@ -1554,6 +1566,49 @@ acfs_load_upstream_checksums() {
             continue
         fi
     done <<< "$content"
+}
+
+acfs_load_upstream_checksums() {
+    if [[ "$ACFS_UPSTREAM_LOADED" == "true" ]]; then
+        return 0
+    fi
+
+    local content=""
+    local checksums_file=""
+    local checksums_source="unknown"
+
+    if [[ -n "${ACFS_CHECKSUMS_YAML:-}" ]] && [[ -r "$ACFS_CHECKSUMS_YAML" ]]; then
+        checksums_file="$ACFS_CHECKSUMS_YAML"
+        checksums_source="bootstrap"
+    elif [[ -n "${SCRIPT_DIR:-}" ]] && [[ -r "$SCRIPT_DIR/checksums.yaml" ]]; then
+        checksums_file="$SCRIPT_DIR/checksums.yaml"
+        checksums_source="local"
+    elif [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -r "$ACFS_BOOTSTRAP_DIR/checksums.yaml" ]]; then
+        checksums_file="$ACFS_BOOTSTRAP_DIR/checksums.yaml"
+        checksums_source="bootstrap"
+    fi
+
+    if [[ -n "$checksums_file" ]]; then
+        content="$(cat "$checksums_file")"
+    else
+        # Fetch via GitHub API (bypasses CDN caching entirely)
+        content="$(acfs_fetch_fresh_checksums_via_api)" || {
+            # Fallback to raw.githubusercontent.com with cache-bust
+            local cb
+            cb="$(date +%s)"
+            content="$(acfs_fetch_url_content "$ACFS_RAW/checksums.yaml?cb=${cb}")" || {
+                log_error "Failed to fetch checksums.yaml from any source"
+                return 1
+            }
+            checksums_source="raw-cdn"
+        }
+        checksums_source="${checksums_source:-github-api}"
+    fi
+
+    # Store source for debugging
+    ACFS_CHECKSUMS_SOURCE="$checksums_source"
+
+    acfs_parse_checksums_content "$content"
 
     local required_tools=(
         atuin bun bv caam cass claude cm mcp_agent_mail ntm ohmyzsh rust slb ubs uv zoxide
@@ -1576,7 +1631,8 @@ acfs_load_upstream_checksums() {
 
 #
 # Upstream installers are pinned by checksums.yaml.
-# On checksum mismatch we fail closed (never execute unverified scripts).
+# On checksum mismatch, we attempt a fresh fetch via GitHub API to handle CDN caching.
+# If still mismatched after fresh fetch, we fail closed (never execute unverified scripts).
 
 acfs_run_verified_upstream_script_as_target() {
     local tool="$1"
@@ -1614,18 +1670,53 @@ acfs_run_verified_upstream_script_as_target() {
     actual_sha256="$(printf '%s' "$content" | acfs_calculate_sha256)" || return 1
 
     if [[ "$actual_sha256" != "$expected_sha256" ]]; then
-        log_error "Security error: checksum mismatch for '$tool'"
-        log_detail "URL: $url"
-        log_detail "Expected: $expected_sha256"
-        log_detail "Actual:   $actual_sha256"
-        log_error "Refusing to execute unverified installer script."
-        log_error "Fix: update checksums.yaml in the ACFS repo and re-run."
+        # Checksum mismatch - but this might be due to CDN caching of our checksums.yaml.
+        # Try fetching FRESH checksums directly via GitHub API (bypasses all CDN caching).
+        log_detail "Checksum mismatch for '$tool' - fetching fresh checksums via GitHub API..."
 
-        if [[ "${ACFS_STRICT_MODE:-false}" == "true" ]]; then
-            log_fatal "Strict mode: aborting due to checksum mismatch for '$tool'"
+        local fresh_content
+        fresh_content="$(acfs_fetch_fresh_checksums_via_api)" || {
+            log_detail "GitHub API fallback failed, cannot verify with fresh checksums"
+            log_error "Security error: checksum mismatch for '$tool'"
+            log_detail "URL: $url"
+            log_detail "Expected: $expected_sha256"
+            log_detail "Actual:   $actual_sha256"
+            log_error "Refusing to execute unverified installer script."
+            return 1
+        }
+
+        # Parse fresh checksums and get the updated expected hash
+        acfs_parse_checksums_content "$fresh_content"
+        local fresh_expected_sha256="${ACFS_UPSTREAM_SHA256[$tool]:-}"
+
+        if [[ -z "$fresh_expected_sha256" ]]; then
+            log_error "Fresh checksums.yaml missing entry for '$tool'"
+            return 1
         fi
 
-        return 1
+        # Re-verify with fresh checksum
+        if [[ "$actual_sha256" == "$fresh_expected_sha256" ]]; then
+            log_success "Verified '$tool' with fresh checksums from GitHub API"
+            # Update the stored expected hash for any future checks
+            expected_sha256="$fresh_expected_sha256"
+        else
+            # Still doesn't match even with fresh checksums - this is a real problem
+            log_error "Security error: checksum mismatch for '$tool' (verified with fresh checksums)"
+            log_detail "URL: $url"
+            log_detail "Expected (fresh): $fresh_expected_sha256"
+            log_detail "Actual:           $actual_sha256"
+            log_error "Refusing to execute unverified installer script."
+            log_error "This could indicate:"
+            log_error "  1. Upstream changed their installer very recently (wait and retry)"
+            log_error "  2. Potential tampering (investigate before proceeding)"
+            log_error "  3. Network issue corrupting downloads (retry on different network)"
+
+            if [[ "${ACFS_STRICT_MODE:-false}" == "true" ]]; then
+                log_fatal "Strict mode: aborting due to checksum mismatch for '$tool'"
+            fi
+
+            return 1
+        fi
     fi
 
     printf '%s' "$content" | run_as_target "$runner" -s -- "$@"
