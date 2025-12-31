@@ -587,23 +587,40 @@ update_agents() {
     local claude_path=""
     claude_path=$(command -v claude 2>/dev/null) || true
     local bun_claude_detected=false
-    if [[ -n "$claude_path" ]] && [[ "$claude_path" == *".bun"* || "$claude_path" == *"node_modules"* ]]; then
-        bun_claude_detected=true
-        if [[ "$FORCE_MODE" == "true" ]]; then
-            log_to_file "Removing bun-installed Claude to switch to native version: $claude_path"
-            local bun_bin="$HOME/.bun/bin/bun"
-            if [[ -x "$bun_bin" ]]; then
-                # Try to uninstall via bun
-                "$bun_bin" remove -g @anthropic-ai/claude-code 2>/dev/null || true
-                "$bun_bin" remove -g claude-code 2>/dev/null || true
-            fi
-            # Also remove the symlink/binary directly if it still exists
-            if [[ -f "$claude_path" || -L "$claude_path" ]]; then
-                rm -f "$claude_path" 2>/dev/null || true
-            fi
-            # Clear the cached path so we detect as "not installed" for fresh install
-            claude_path=""
+
+    # Check if claude is bun-installed. This can happen in two ways:
+    # 1. Direct path: ~/.bun/bin/claude
+    # 2. Symlink: ~/.local/bin/claude -> ~/.bun/bin/claude (created by installer)
+    # We need to resolve symlinks to detect case 2.
+    if [[ -n "$claude_path" ]]; then
+        local resolved_path="$claude_path"
+        if [[ -L "$claude_path" ]]; then
+            resolved_path=$(readlink -f "$claude_path" 2>/dev/null) || resolved_path="$claude_path"
         fi
+        if [[ "$claude_path" == *".bun"* || "$claude_path" == *"node_modules"* || \
+              "$resolved_path" == *".bun"* || "$resolved_path" == *"node_modules"* ]]; then
+            bun_claude_detected=true
+        fi
+    fi
+
+    if [[ "$bun_claude_detected" == "true" ]] && [[ "$FORCE_MODE" == "true" ]]; then
+        log_to_file "Removing bun-installed Claude to switch to native version: $claude_path"
+        local bun_bin="$HOME/.bun/bin/bun"
+        if [[ -x "$bun_bin" ]]; then
+            # Try to uninstall via bun
+            "$bun_bin" remove -g @anthropic-ai/claude-code 2>/dev/null || true
+        fi
+        # Also remove the symlink/binary directly if it still exists
+        if [[ -f "$claude_path" || -L "$claude_path" ]]; then
+            rm -f "$claude_path" 2>/dev/null || true
+        fi
+        # Remove the actual bun binary too if it's separate from the symlink
+        local bun_claude_bin="$HOME/.bun/bin/claude"
+        if [[ -f "$bun_claude_bin" || -L "$bun_claude_bin" ]] && [[ "$bun_claude_bin" != "$claude_path" ]]; then
+            rm -f "$bun_claude_bin" 2>/dev/null || true
+        fi
+        # Clear the cached path so we detect as "not installed" for fresh install
+        claude_path=""
     fi
 
     if cmd_exists claude && [[ "$bun_claude_detected" != "true" || "$FORCE_MODE" != "true" ]]; then
