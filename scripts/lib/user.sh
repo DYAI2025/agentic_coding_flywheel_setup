@@ -8,6 +8,15 @@
 #   - $SUDO to be set (empty string for root, "sudo" otherwise)
 # ============================================================
 
+# Prevent multiple sourcing
+if [[ -n "${_ACFS_USER_SH_LOADED:-}" ]]; then
+    if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+        return 0
+    fi
+    exit 0
+fi
+_ACFS_USER_SH_LOADED=1
+
 # Fallback logging if logging.sh not sourced
 if ! declare -f log_fatal &>/dev/null; then
     log_fatal() { echo "FATAL: $1" >&2; exit 1; }
@@ -376,17 +385,22 @@ prompt_ssh_key() {
 }
 
 # Full user normalization sequence
-normalize_user() {
-    log_step "1/8" "Normalizing user account..."
+# NOTE: install.sh defines its own normalize_user phase function. This library is
+# sourced by install.sh at runtime, so we must avoid overriding existing
+# definitions (TARGET_USER handling + newer idempotency logic live in install.sh).
+if ! declare -f normalize_user >/dev/null 2>&1; then
+    normalize_user() {
+        log_step "1/8" "Normalizing user account..."
 
-    ensure_user
+        ensure_user
 
-    local mode="${MODE:-${ACFS_MODE:-vibe}}"
-    if [[ "$mode" == "vibe" ]]; then
-        enable_passwordless_sudo
-    fi
+        local mode="${MODE:-${ACFS_MODE:-vibe}}"
+        if [[ "$mode" == "vibe" ]]; then
+            enable_passwordless_sudo
+        fi
 
-    migrate_ssh_keys
+        migrate_ssh_keys
 
-    log_success "User normalization complete"
-}
+        log_success "User normalization complete"
+    }
+fi
