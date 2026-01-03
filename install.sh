@@ -1435,7 +1435,6 @@ run_as_target() {
 declare -A ACFS_UPSTREAM_URLS=()
 declare -A ACFS_UPSTREAM_SHA256=()
 ACFS_UPSTREAM_LOADED=false
-ACFS_CHECKSUMS_SOURCE=""  # Tracks where checksums were loaded from (bootstrap, local, github-api, raw-cdn)
 
 acfs_calculate_sha256() {
     if command_exists sha256sum; then
@@ -1605,9 +1604,6 @@ acfs_load_upstream_checksums() {
         # If we didn't fall back to raw-cdn, the API succeeded
         [[ "$checksums_source" == "unknown" ]] && checksums_source="github-api"
     fi
-
-    # Store source for debugging
-    ACFS_CHECKSUMS_SOURCE="$checksums_source"
 
     acfs_parse_checksums_content "$content"
 

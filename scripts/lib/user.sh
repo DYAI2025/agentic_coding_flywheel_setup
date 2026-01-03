@@ -269,6 +269,12 @@ can_sudo_nopasswd() {
 # Called when running as root with no existing key
 # Returns 0 on success or skip, 1 on invalid key
 prompt_ssh_key() {
+    # Skip entirely in CI mode - no TTY available and no need for SSH keys
+    if [[ "${ACFS_CI:-false}" == "true" ]]; then
+        log_detail "Skipping SSH key prompt (CI mode)"
+        return 0
+    fi
+
     local authorized_keys="/root/.ssh/authorized_keys"
     local has_existing_key=false
     local existing_key_info=""

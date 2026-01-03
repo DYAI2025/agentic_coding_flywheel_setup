@@ -111,7 +111,15 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: bunx playwright install --with-deps ${{ matrix.project == 'chromium' && 'chromium' || matrix.project == 'firefox' && 'firefox' || matrix.project == 'webkit' && 'webkit' || matrix.project == 'Mobile Chrome' && 'chromium' || 'webkit' }}
+        run: |
+          case "${{ matrix.project }}" in
+            chromium) browser=chromium ;;
+            firefox) browser=firefox ;;
+            webkit) browser=webkit ;;
+            "Mobile Chrome") browser=chromium ;;
+            *) browser=webkit ;;
+          esac
+          bunx playwright install --with-deps "$browser"
 
       - name: Run Playwright tests
         run: bun run test --project="${{ matrix.project }}"
