@@ -56,6 +56,26 @@ claude auth login
 Follow the browser link to authenticate with your Anthropic account.
 
 ### Codex CLI
+
+**On a headless VPS**, Codex requires special handling because its OAuth callback expects `localhost:1455`:
+
+**Option 1: Device Auth (Recommended)**
+```bash
+# First: Enable "Device code login" in ChatGPT Settings → Security
+# Then:
+codex login --device-auth
+```
+
+**Option 2: SSH Tunnel**
+```bash
+# On your laptop, create a tunnel:
+ssh -L 1455:localhost:1455 ubuntu@YOUR_VPS_IP
+
+# Then on the VPS:
+codex login
+```
+
+**Option 3: Standard Login** (if you have a desktop/browser)
 ```bash
 codex login
 ```

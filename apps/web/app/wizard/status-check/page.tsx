@@ -240,6 +240,29 @@ export default function StatusCheckPage() {
           </div>
         </AlertCard>
 
+        {/* Codex-specific auth note */}
+        <AlertCard variant="warning" icon={AlertCircle} title="Codex CLI: Special Headless Setup">
+          <div className="space-y-2">
+            <p>
+              <strong>Codex requires extra steps</strong> because its OAuth callback expects{" "}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">localhost:1455</code>,
+              which doesn&apos;t work on a remote VPS.
+            </p>
+            <p className="text-sm font-medium">Option 1: Device Auth (Recommended)</p>
+            <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
+              <li>Go to <a href="https://chatgpt.com/settings/security" target="_blank" rel="noopener noreferrer" className="text-primary underline">ChatGPT Settings → Security</a></li>
+              <li>Enable &quot;Device code login&quot; (may be in beta)</li>
+              <li>Then run: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">codex login --device-auth</code></li>
+            </ol>
+            <p className="text-sm font-medium mt-2">Option 2: SSH Tunnel</p>
+            <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
+              <li>On your laptop: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ssh -L 1455:localhost:1455 ubuntu@YOUR_VPS_IP</code></li>
+              <li>Then run: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">codex login</code></li>
+              <li>The OAuth redirect will reach your VPS through the tunnel</li>
+            </ol>
+          </div>
+        </AlertCard>
+
         <AlertCard variant="success" icon={Bot} title="You don't need to log into everything right now">
           <div className="space-y-2 text-sm">
             <p className="text-muted-foreground">
