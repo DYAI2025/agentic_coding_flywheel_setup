@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-01-06T12:08:39+00:00
+# checksums.yaml - Auto-generated 2026-01-06T16:06:20+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -8,7 +8,7 @@ installers:
 
   cass:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh"
-    sha256: "fcfbabc606e587402724007ab99c277264919f8007d3dce468f9cf407cc88ca7"
+    sha256: "b40361a3eedb0968edeb4b31de90e4a6636cc8e83ad5ef2b8bfcd6ed7dbce3c3"
 
   mcp_agent_mail:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh"
