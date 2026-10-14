@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-10-14T09:15:19+00:00
+# checksums.yaml - Auto-generated 2026-10-14T19:57:01+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -48,7 +48,7 @@ installers:
 
   slb:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
-    sha256: "dc9b0680d581b481147dc9b89f3cf78c9d0e3fbfcae19185c66aaae1e0b1bedd"
+    sha256: "52f0ef85f2e5199bdc4e7c5a416ec31072c6e7068b09d1ec6569e74d9ff050cd"
 
   nvm:
     url: "https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh"
